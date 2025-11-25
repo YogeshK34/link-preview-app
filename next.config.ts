@@ -27,5 +27,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-// Invalid src prop (https://i.scdn.co/image/ab67616d0000b27354e544672baa16145d67612b) on `next/image`, hostname "i.scdn.co" is not configured under images in your `next.config.js`
 export default nextConfig;
