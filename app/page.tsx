@@ -18,11 +18,13 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { FloatingDock } from "@/components/ui/floating-dock";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { IconBrandGithub, IconBrandX, IconExchange, IconHome, IconNewSection, IconTerminal2 } from "@tabler/icons-react";
 import { HelpCircle, UserStar } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -63,14 +65,74 @@ export function LinkPreviewCard({ preview }: { preview: any }) {
           {preview?.type}
         </p>
         <Link href={preview.audio}>
-        <p className="text-sm text-muted-foreground">
-          {preview?.audio}
-        </p>
+          <p className="text-sm text-muted-foreground">
+            {preview?.audio}
+          </p>
         </Link>
       </CardContent>
     </Card>
   );
 }
+
+const linksComponent = [
+  {
+    title: "Home",
+    icon: (
+      <IconHome className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+    ),
+    href: "#",
+  },
+
+  {
+    title: "Products",
+    icon: (
+      <IconTerminal2 className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+    ),
+    href: "#",
+  },
+  {
+    title: "Components",
+    icon: (
+      <IconNewSection className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+    ),
+    href: "#",
+  },
+  {
+    title: "Aceternity UI",
+    icon: (
+      <img
+        src="https://assets.aceternity.com/logo-dark.png"
+        width={20}
+        height={20}
+        alt="Aceternity Logo"
+      />
+    ),
+    href: "#",
+  },
+  {
+    title: "Changelog",
+    icon: (
+      <IconExchange className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+    ),
+    href: "#",
+  },
+
+  {
+    title: "Twitter",
+    icon: (
+      <IconBrandX className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+    ),
+    href: "#",
+  },
+  {
+    title: "GitHub",
+    icon: (
+      <IconBrandGithub className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+    ),
+    href: "#",
+  },
+];
+
 
 
 /* eslint-disable */
@@ -85,7 +147,8 @@ export default function Home() {
     inputRef.current?.focus();
   }, [])
 
-  async function handleLinkSubmit() {
+  async function handleLinkSubmit(e: React.FormEvent) {
+    e.preventDefault();
     if (input.trim() === "") {
       toast.warning("Input cannot be empty!");
       return;
@@ -113,8 +176,11 @@ export default function Home() {
       toast.error("Something went wrong.");
     } finally {
       setLoading(false);
-    }
-  }
+    };
+
+  };
+
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-muted/20 px-4 py-6">
@@ -162,38 +228,41 @@ export default function Home() {
           <Separator />
 
           <CardContent className="pt-6">
-            <div className="flex flex-col gap-5">
-              <div className="grid gap-2">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Enter the Link
-                </Label>
-                <Input
-                  ref={inputRef}
-                  placeholder="https://github.com"
-                  required
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className="focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
+            <form onSubmit={handleLinkSubmit}>
+              <div className="flex flex-col gap-5">
+                <div className="grid gap-2">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Enter the Link
+                  </Label>
+                  <Input
+                    type='text'
+                    ref={inputRef}
+                    placeholder="https://github.com"
+                    required
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    className="focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
 
-              <Button
-                variant="default"
-                type="button"
-                onClick={handleLinkSubmit}
-                className="w-full h-10 font-medium"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Spinner className="h-4 w-4" />
-                    <span>Submitting...</span>
-                  </div>
-                ) : (
-                  "Submit"
-                )}
-              </Button>
-            </div>
+                <Button
+                  variant="default"
+                  type='submit'
+                  // onClick={handleLinkSubmit}
+                  className="w-full h-10 font-medium"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Spinner className="h-4 w-4" />
+                      <span>Submitting...</span>
+                    </div>
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              </div>
+            </form>
           </CardContent>
 
           <Separator />
@@ -209,7 +278,6 @@ export default function Home() {
                 </EmptyHeader>
               </Empty>
             )}
-
           </CardFooter>
         </Card>
 
