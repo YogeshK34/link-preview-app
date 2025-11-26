@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
+// import { resourceUsage } from "process";
 
 export async function POST(request: NextRequest) {
     // I have to just get the link and display it to the user 
@@ -36,18 +37,27 @@ export async function POST(request: NextRequest) {
 
         const $ = cheerio.load(html);
 
-        const getMeta = (property: string) =>
-            $(`meta[property="${property}"]`).attr("content") ||
-            $(`meta[name="${property}"]`).attr("content") ||
-            "";
+        const getMeta = (...names: string[]) => {
+            for (const name of names) {
+                const byProperty = $(`meta[property="${name}"]`).attr("content");
+                if (byProperty) return byProperty;
+
+                const byName = $(`meta[name="${name}"]`).attr("content");
+                if (byName) return byName;
+            }
+            return "";
+        };
 
         // extract the data 
         const ogData = {
             url: link,
-            title: getMeta("og:title") || $("title").text || "",
-            description: getMeta("og:description") || "",
-            image: getMeta("og:image") || "",
-            site_name: getMeta("og:site_name") || ","
+            title: getMeta("og:title", "twitter:title", "title") || $("title").text || "",
+
+            description: getMeta("og:description", "twitter:description", "description") || "",
+
+            image: getMeta("og:image", "twitter:image") || "",
+
+            site_name: getMeta("og:site_name", "application-name") || ""
         };
 
         return NextResponse.json(

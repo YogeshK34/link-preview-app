@@ -22,6 +22,28 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'i.scdn.co',
         pathname: "**"
+      }, {
+        protocol: "https",
+        hostname: "v0.app",
+        pathname: "**"
+      }, 
+      {
+        protocol: "https",
+        hostname: "assets.vercel.com",
+        pathname: "**"
+      }, {
+        protocol: "https",
+        hostname: "miro.medium.com",
+        pathname: "**"
+      },  {
+        protocol: "https",
+        hostname: "vercel.com",
+        pathname: "**"
+      }, 
+      {
+        protocol: "https",
+        hostname: "pdgvvgmkdvyeydso.public.blob.vercel-storage.com",
+        pathname: "**"
       }
     ]
   }
