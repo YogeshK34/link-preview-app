@@ -59,6 +59,14 @@ export function LinkPreviewCard({ preview }: { preview: any }) {
         <p className="text-sm text-muted-foreground">
           {preview.description || "No description available"}
         </p>
+        <p className="text-sm text-muted-foreground">
+          {preview?.type}
+        </p>
+        <Link href={preview.audio}>
+        <p className="text-sm text-muted-foreground">
+          {preview?.audio}
+        </p>
+        </Link>
       </CardContent>
     </Card>
   );

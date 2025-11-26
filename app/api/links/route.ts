@@ -57,7 +57,11 @@ export async function POST(request: NextRequest) {
 
             image: getMeta("og:image", "twitter:image") || "",
 
-            site_name: getMeta("og:site_name", "application-name") || ""
+            site_name: getMeta("og:site_name", "application-name") || "",
+
+            type: getMeta("og:type", "type") || "",
+
+            audio: getMeta("og:audio", "audio") || "",
         };
 
         return NextResponse.json(
