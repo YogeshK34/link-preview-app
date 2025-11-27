@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   title: "Link Storer",
   description: "A Web Application used to store links",
   openGraph: {
-    title: "Link Storer",
-    description: "Generate beautiful preview cards",
-    url: "http://link-store-app.vercel.app/",
+    title: "Link Storer . Store and preview links beautifully.",
+    description: "Link Storer makes it effortless to store, organize, and preview your favorite links using beautiful OpenGraph cards",
+    url: "https://link-store-app.vercel.app/",
     siteName: "Link Storer",
     images: [
       {
