@@ -16,6 +16,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Link Storer",
   description: "A Web Application used to store links",
+  openGraph: {
+    title: "Link Storer",
+    description: "Generate beautiful preview cards",
+    url: "http://link-store-app.vercel.app/",
+    siteName: "Link Storer",
+    images: [
+      {
+        url: "/image.png",
+        width: 1200,
+        height: 630
+      }
+    ]
+  }
 };
 
 export default function RootLayout({
