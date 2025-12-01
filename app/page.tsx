@@ -30,7 +30,7 @@ export function LinkPreviewCard({ preview }: { preview: any }) {
         <Link href={preview.url} rel="noopener noreferrer" target="_blank">
           <div className="relative h-40 overflow-hidden bg-muted">
             <img
-              src={preview.image || "/placeholder.svg"}
+              src={preview.image || "/placeholder.png"}
               alt={preview.title}
               width={600}
               height={300}

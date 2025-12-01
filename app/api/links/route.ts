@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import { createClient } from "@/utils/supabase/server";
-// import { resourceUsage } from "process";
 
 export async function POST(request: NextRequest) {
     const supabase = await createClient()
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
 
             description: getMeta("og:description", "twitter:description", "description") || "",
 
-            image: getMeta("og:image", "twitter:image") || "",
+            image: getMeta("og:image", "twitter:image") || "/placeholder.png",
 
             site_name: getMeta("og:site_name", "application-name") || "",
 
@@ -118,23 +117,29 @@ export async function POST(request: NextRequest) {
 // GET all links for current user
 export async function GET(request: Request) {
     const supabase = await createClient()
+    try {
+        const { data: { user } } = await supabase.auth.getUser()
 
-    const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
 
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        // Fetch user's links (NO RLS!)
+        const { data: links, error } = await supabase
+            .from('links')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+        return NextResponse.json({ links })
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json(
+            { error: "Internal Server Error!" },
+            { status: 500 }
+        )
     }
-
-    // Fetch user's links (NO RLS!)
-    const { data: links, error } = await supabase
-        .from('links')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-    if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ links })
 }
