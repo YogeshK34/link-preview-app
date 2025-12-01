@@ -1,310 +1,367 @@
-"use client";
+"use client"
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { FloatingDock } from "@/components/ui/floating-dock";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { IconBrandGithub, IconBrandX, IconExchange, IconHome, IconNewSection, IconTerminal2 } from "@tabler/icons-react";
-import { HelpCircle, UserStar } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import type React from "react"
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Spinner } from "@/components/ui/spinner"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { HelpCircle, UserSearch as UserStar, ExternalLink } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
+import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
+import type { User } from "@supabase/supabase-js"
 
 /*eslint-disable*/
 export function LinkPreviewCard({ preview }: { preview: any }) {
-  if (!preview) return null;
+  if (!preview) return null
 
   return (
-    <Card className="w-full max-w-md mt-6 overflow-hidden border border-border rounded-xl shadow-sm">
+    <div className="group relative overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:scale-105">
       {preview.image && (
-        <Link href={preview.url} rel='noopener norefferer' target='_blank'>
-          <img
-            src={preview.image}
-            alt={preview.title}
-            width={600}
-            height={300}
-            className='w-full h-48 object-cover cursor-pointer hover-opacity-90 transition'
-          />
+        <Link href={preview.url} rel="noopener noreferrer" target="_blank">
+          <div className="relative h-40 overflow-hidden bg-muted">
+            <img
+              src={preview.image || "/placeholder.svg"}
+              alt={preview.title}
+              width={600}
+              height={300}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-end p-3">
+              <ExternalLink className="w-5 h-5 text-white" />
+            </div>
+          </div>
         </Link>
       )}
 
-      <CardHeader>
-        <CardTitle className="text-lg">
-          {preview.title || "No Title"}
-        </CardTitle>
-        <CardDescription>
-          {preview.site_name || new URL(preview.url).hostname}
-        </CardDescription>
-      </CardHeader>
+      <div className="p-4">
+        <Link href={preview.url} rel="noopener noreferrer" target="_blank">
+          <h3 className="font-semibold text-sm line-clamp-2 text-foreground hover:text-primary transition-colors mb-2">
+            {preview.title || "No Title"}
+          </h3>
+        </Link>
 
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-2 h-2 rounded-full bg-primary"></div>
+          </div>
+          {preview.site_name || new URL(preview.url).hostname}
+        </p>
+
+        <p className="text-xs text-muted-foreground line-clamp-2">
           {preview.description || "No description available"}
         </p>
-        <p className="text-sm text-muted-foreground">
-          {preview?.type}
-        </p>
-        <Link href={preview.audio}>
-          <p className="text-sm text-muted-foreground">
-            {preview?.audio}
-          </p>
-        </Link>
-      </CardContent>
-    </Card>
-  );
+      </div>
+    </div>
+  )
 }
 
-const linksComponent = [
-  {
-    title: "Home",
-    icon: (
-      <IconHome className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-    ),
-    href: "#",
-  },
-
-  {
-    title: "Products",
-    icon: (
-      <IconTerminal2 className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-    ),
-    href: "#",
-  },
-  {
-    title: "Components",
-    icon: (
-      <IconNewSection className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-    ),
-    href: "#",
-  },
-  {
-    title: "Aceternity UI",
-    icon: (
-      <img
-        src="https://assets.aceternity.com/logo-dark.png"
-        width={20}
-        height={20}
-        alt="Aceternity Logo"
-      />
-    ),
-    href: "#",
-  },
-  {
-    title: "Changelog",
-    icon: (
-      <IconExchange className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-    ),
-    href: "#",
-  },
-
-  {
-    title: "Twitter",
-    icon: (
-      <IconBrandX className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-    ),
-    href: "#",
-  },
-  {
-    title: "GitHub",
-    icon: (
-      <IconBrandGithub className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-    ),
-    href: "#",
-  },
-];
-
-
+const supabase = createClient()
 
 /* eslint-disable */
 export default function Home() {
-  const [input, setInput] = useState<string>("");
-  const [returnedLink, setReturnedLink] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [preview, setPreview] = useState<any>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [input, setInput] = useState<string>("")
+  const [loading, setLoading] = useState<boolean>(false)
+  const [preview, setPreview] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState<boolean>(true)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [links, setLinks] = useState<any[]>([])
+  const [linksLoading, setIsLinksLoading] = useState<boolean>(true)
+  const router = useRouter()
 
   useEffect(() => {
-    inputRef.current?.focus();
+    inputRef.current?.focus()
+
+    // Check authentication status
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setUser(user)
+      setAuthLoading(false)
+    }
+
+    checkUser()
+
+    // here I think I have to call the GET route
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/links", {
+          method: "GET",
+        })
+
+        if (!res.ok) {
+          const err = await res.json()
+          toast.error(err.error)
+          return
+        }
+
+        const body = await res.json()
+        setLinks(body.links)
+      } catch (error) {
+        console.error(error)
+        toast.error("Failed to load you're links!")
+      } finally {
+        setIsLinksLoading(false)
+      }
+    }
+
+    fetchData()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   async function handleLinkSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (input.trim() === "") {
-      toast.warning("Input cannot be empty!");
-      return;
+    e.preventDefault()
+
+    // Check if user is authenticated
+    if (!user) {
+      toast.error("Please sign in to submit links", {
+        action: {
+          label: "Sign In",
+          onClick: () => router.push("/login"),
+        },
+      })
+      return
     }
 
-    setLoading(true);
+    if (input.trim() === "") {
+      toast.warning("Input cannot be empty!")
+      return
+    }
+
+    setLoading(true)
 
     try {
       const res = await fetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ link: input }),
-      });
+      })
 
       if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.error);
-        return;
+        const err = await res.json()
+        toast.error(err.error)
+        return
       }
 
-      const body = await res.json();
-      setPreview(body.ogData);
-      toast.success("Link submitted successfully!");
+      const body = await res.json()
+      setPreview(body.data)
+      toast.success("Link submitted successfully!")
     } catch (error) {
-      toast.error("Something went wrong.");
+      toast.error("Something went wrong.")
     } finally {
-      setLoading(false);
-    };
+      setLoading(false)
+    }
+  }
 
-  };
-
-
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setPreview(null)
+    toast.success("Signed out successfully!")
+  }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-muted/20 px-4 py-6">
-      <div className="w-full max-w-md flex flex-col items-center gap-6">
-        <Card className="w-full shadow-lg border border-border/40 rounded-xl">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">Link Storer</CardTitle>
-                <CardDescription className="mt-1 flex items-center gap-1.5">
-                  Store your desired GitHub links easily
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {/* <Button variant='outline'>Hover</Button> */}
-                      <HelpCircle />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Add your social/profile links to get a preview card.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </CardDescription>
-              </div>
+    <div className="min-h-screen w-full flex flex-col bg-background px-4 py-8">
+      <div className="flex-1 max-w-7xl mx-auto w-full">
+        <div className="mb-12">
+          <Card className="w-full shadow-lg border border-border/40 rounded-xl">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl">Link Storer</CardTitle>
+                  <CardDescription className="mt-1 flex items-center gap-1.5">
+                    {user ? (
+                      <span className="flex items-center gap-2">Signed in as {user.email}</span>
+                    ) : (
+                      "Store your desired GitHub links easily"
+                    )}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-4 h-4" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add your social/profile links to get a preview card.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </CardDescription>
+                </div>
 
-              <CardAction>
-                {preview ? (
-                  <Link href={preview.url} target="_blank">
+                <CardAction>
+                  {user ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full">
+                            <Avatar>
+                              <AvatarImage
+                                src={user.user_metadata?.avatar_url || "/placeholder.svg"}
+                                alt={user.email || "User"}
+                              />
+                              <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Click to sign out</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
                     <Avatar>
-                      <AvatarImage src={preview.image} alt={preview.title} />
                       <AvatarFallback>
                         <UserStar />
                       </AvatarFallback>
                     </Avatar>
-                  </Link>
-                ) : (
-                  <Avatar>
-                    <AvatarFallback>
-                      <UserStar />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-              </CardAction>
-            </div>
-          </CardHeader>
-
-          <Separator />
-
-          <CardContent className="pt-6">
-            <form onSubmit={handleLinkSubmit}>
-              <div className="flex flex-col gap-5">
-                <div className="grid gap-2">
-                  <Label className="text-sm font-medium text-muted-foreground">
-                    Enter the Link
-                  </Label>
-                  <Input
-                    type='text'
-                    ref={inputRef}
-                    placeholder="https://github.com"
-                    required
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    className="focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-
-                <Button
-                  variant="default"
-                  type='submit'
-                  // onClick={handleLinkSubmit}
-                  className="w-full h-10 font-medium"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <Spinner className="h-4 w-4" />
-                      <span>Submitting...</span>
-                    </div>
-                  ) : (
-                    "Submit"
                   )}
-                </Button>
+                </CardAction>
               </div>
-            </form>
-          </CardContent>
+            </CardHeader>
 
-          <Separator />
+            <Separator />
 
-          <CardFooter className="py-6">
-            {preview ? (
+            <CardContent className="pt-6">
+              <form onSubmit={handleLinkSubmit}>
+                <div className="flex flex-col gap-5">
+                  <div className="grid gap-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Enter the Link</Label>
+                    <Input
+                      type="text"
+                      ref={inputRef}
+                      placeholder="https://github.com"
+                      required
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      className="focus:ring-2 focus:ring-primary/50"
+                      disabled={!user}
+                    />
+                  </div>
+
+                  {!user && !authLoading && (
+                    <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+                      Please{" "}
+                      <Button
+                        variant="link"
+                        type="button"
+                        className="p-0 h-auto font-semibold"
+                        onClick={() => router.push("/login?redirectTo=/")}
+                      >
+                        sign in
+                      </Button>{" "}
+                      to submit links
+                    </div>
+                  )}
+
+                  <Button
+                    variant="default"
+                    type="submit"
+                    className="w-full h-10 font-medium"
+                    disabled={loading || !user || authLoading}
+                  >
+                    {authLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Spinner className="h-4 w-4" />
+                        <span>Loading...</span>
+                      </div>
+                    ) : loading ? (
+                      <div className="flex items-center gap-2">
+                        <Spinner className="h-4 w-4" />
+                        <span>Submitting...</span>
+                      </div>
+                    ) : !user ? (
+                      "Sign in to Submit"
+                    ) : (
+                      "Submit"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="w-full">
+          {preview ? (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 text-foreground">Latest Preview</h2>
               <LinkPreviewCard preview={preview} />
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>No link added yet</EmptyTitle>
-                  <EmptyDescription>Start by entering a link above</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            )}
-          </CardFooter>
-        </Card>
+            </div>
+          ) : null}
 
+          {linksLoading ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>No link added yet</EmptyTitle>
+                <EmptyDescription>
+                  {user ? "Start by entering a link above" : "Sign in to start adding links"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : links.length > 0 ? (
+            <div className="w-full">
+              <h2 className="text-lg font-semibold mb-4 text-foreground">Your Saved Links</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+                {links.map((link) => (
+                  <LinkPreviewCard key={link.id} preview={link} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>No link added yet</EmptyTitle>
+                <EmptyDescription>
+                  {user ? "Start by entering a link above" : "Sign in to start adding links"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-16 w-full max-w-7xl mx-auto">
         <Accordion
-          type='single'
+          type="single"
           collapsible
-          className='w-full rounded-lg border border-border/40 p-4 bg-card'
-          defaultValue='item-1'
+          className="w-full rounded-lg border border-border/40 p-4 bg-card"
+          defaultValue="item-1"
         >
           <AccordionItem value="item-1">
             <AccordionTrigger>Application Information</AccordionTrigger>
             <AccordionContent className="flex flex-col gap-4 text-balance">
-              Link Storer allows you to paste any supported link, and instantly generates
-              a clean, beautiful preview card using OpenGraph metadata.
+              Link Storer allows you to paste any supported link, and instantly generates a clean, beautiful preview
+              card using OpenGraph metadata.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-2">
             <AccordionTrigger>Supported Websites</AccordionTrigger>
             <AccordionContent className="flex flex-col gap-4 text-balance">
               <p>
-                Link previews currently work best for websites that provide OpenGraph
-                metadata, such as GitHub, YouTube, Spotify, Medium, Substack, and most
-                blogs or news websites.
+                Link previews currently work best for websites that provide OpenGraph metadata, such as GitHub, YouTube,
+                Spotify, Medium, Substack, and most blogs or news websites.
               </p>
               <p>
-                Some platforms like X (Twitter) and LinkedIn limit metadata for profile
-                links, so previews may be limited or unavailable.
+                Some platforms like X (Twitter) and LinkedIn limit metadata for profile links, so previews may be
+                limited or unavailable.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -312,14 +369,10 @@ export default function Home() {
             <AccordionTrigger>How Link Previews Work</AccordionTrigger>
             <AccordionContent className="flex flex-col gap-4 text-balance">
               <p>
-                When you submit a link, our backend fetches the page HTML, extracts
-                metadata such as title, description, and images using OpenGraph tags,
-                and sends the preview back to your browser.
+                When you submit a link, our backend fetches the page HTML, extracts metadata such as title, description,
+                and images using OpenGraph tags, and sends the preview back to your browser.
               </p>
-              <p>
-                This ensures fast, secure, and accurate previews without exposing your
-                browser to CORS issues.
-              </p>
+              <p>This ensures fast, secure, and accurate previews without exposing your browser to CORS issues.</p>
             </AccordionContent>
           </AccordionItem>
 
@@ -327,30 +380,22 @@ export default function Home() {
             <AccordionTrigger>Privacy & Security</AccordionTrigger>
             <AccordionContent className="flex flex-col gap-4 text-balance">
               <p>
-                All link processing happens securely on the server. Your submitted links
-                are never shared with third-party services.
+                All link processing happens securely on the server. Your submitted links are never shared with
+                third-party services.
               </p>
-              <p>
-                We only extract publicly available metadata — no login or personal data
-                is required or collected.
-              </p>
+              <p>We only extract publicly available metadata — no login or personal data is required or collected.</p>
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-5">
             <AccordionTrigger>Why Some Links Don't Show Previews?</AccordionTrigger>
             <AccordionContent className="flex flex-col gap-4 text-balance">
-              <p>
-                Some websites intentionally block metadata scraping to protect their
-                content. For example:
-              </p>
+              <p>Some websites intentionally block metadata scraping to protect their content. For example:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li>X/Twitter profile URLs</li>
                 <li>LinkedIn user profile URLs</li>
                 <li>Sites requiring login before viewing</li>
               </ul>
-              <p>
-                In such cases, a fallback preview is shown using the domain name.
-              </p>
+              <p>In such cases, a fallback preview is shown using the domain name.</p>
             </AccordionContent>
           </AccordionItem>
 
@@ -381,5 +426,5 @@ export default function Home() {
         </Accordion>
       </div>
     </div>
-  );
+  )
 }

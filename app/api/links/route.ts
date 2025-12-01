@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
+import { createClient } from "@/utils/supabase/server";
 // import { resourceUsage } from "process";
 
 export async function POST(request: NextRequest) {
-    // I have to just get the link and display it to the user 
+    const supabase = await createClient()
+
     try {
+        // 1. check authentication
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: "Unauthorized. Please sign in" },
+                { status: 401 }
+            );
+        };
+
         const body = await request.json(); // firstly parse the input
         const { link } = body;
 
@@ -64,8 +75,33 @@ export async function POST(request: NextRequest) {
             audio: getMeta("og:audio", "audio") || "",
         };
 
+        // insert into my supabase DB
+        const { data, error } = await supabase
+            .from('links')
+            .insert({
+                url: link,
+                user_id: user.id,
+                title: ogData.title,
+                description: ogData.description,
+                image: ogData.image,
+                site_name: ogData.site_name,
+                type: ogData.type,
+                audio: ogData.audio
+            })
+            .select()
+            .single()
+
+        // eslint-disable
+        if (error) {
+            console.error(error);
+            return NextResponse.json(
+                { error: "Database Error" },
+                { status: 500 }
+            )
+        }
+
         return NextResponse.json(
-            { ogData },
+            { data },
             { status: 200 }
         );
         /*eslint-disable */
@@ -76,4 +112,29 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     };
+}
+
+
+// GET all links for current user
+export async function GET(request: Request) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Fetch user's links (NO RLS!)
+    const { data: links, error } = await supabase
+        .from('links')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ links })
 }
