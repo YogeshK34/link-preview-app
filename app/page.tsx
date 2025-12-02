@@ -93,46 +93,22 @@ export default function Home() {
   const [linksLoading, setIsLinksLoading] = useState<boolean>(true)
   const router = useRouter()
 
+  // 1️⃣ Load user on first render + listen for auth changes
   useEffect(() => {
-    // Check authentication status
     const checkUser = async () => {
       const {
-        data: { user },
+        data: { user }
       } = await supabase.auth.getUser()
+
       setUser(user)
       setAuthLoading(false)
     }
 
     checkUser()
 
-    // here I think I have to call the GET route
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/links", {
-          method: "GET",
-        })
-
-        if (!res.ok) {
-          const err = await res.json()
-          toast.error(err.error)
-          return
-        }
-
-        const body = await res.json()
-        setLinks(body.links)
-      } catch (error) {
-        console.error(error)
-        toast.error("Failed to load you're links!")
-      } finally {
-        setIsLinksLoading(false)
-      }
-    }
-
-    fetchData()
-
-    // Listen for auth changes
+    // Listen for login/logout events
     const {
-      data: { subscription },
+      data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
@@ -140,11 +116,57 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
+
+
+  // 2️⃣ Fetch links — only after we KNOW auth state
+  useEffect(() => {
+    if (authLoading) return  // Wait until auth is fully checked
+
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/links", { method: "GET" })
+
+        // 🟦 Case A: 401 but user is NOT logged in → ignore silently
+        if (res.status === 401 && !user) {
+          return
+        }
+
+        // 🟥 Case B: 401 AND user IS logged in → real auth error
+        if (res.status === 401 && user) {
+          const err = await res.json()
+          toast.error(err.error)
+          return
+        }
+
+        // ⛔ Any other non-OK error
+        if (!res.ok) {
+          const err = await res.json()
+          toast.error(err.error)
+          return
+        }
+
+        // 🟢 Success
+        const body = await res.json()
+        setLinks(body.links)
+      } catch (error) {
+        console.error(error)
+        toast.error("Failed to load your links!")
+      } finally {
+        setIsLinksLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [authLoading, user])
+
+
+  // 3️⃣ Auto-focus input when user is authenticated
   useEffect(() => {
     if (!authLoading && user) {
       inputRef.current?.focus()
     }
   }, [authLoading, user])
+
 
   async function handleLinkSubmit(e: React.FormEvent) {
     e.preventDefault()
