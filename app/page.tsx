@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/utils/supabase/client"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /*eslint-disable*/
 export function LinkPreviewCard({
@@ -301,7 +302,7 @@ export default function Home() {
                         variant="link"
                         type="button"
                         className="p-0 h-auto font-semibold"
-                        onClick={() => router.push("/login?redirectTo=/")}
+                        onClick={() => router.push("/login")}
                       >
                         sign in
                       </Button>{" "}
@@ -346,14 +347,36 @@ export default function Home() {
           ) : null}
 
           {linksLoading ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>No link added yet</EmptyTitle>
-                <EmptyDescription>
-                  {user ? "Start by entering a link above" : "Sign in to start adding links"}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
+                  {/* Image skeleton */}
+                  <Skeleton className="w-full h-40" />
+
+                  {/* Content */}
+                  <div className="flex-1 flex flex-col p-4 gap-3">
+                    {/* Title skeleton */}
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+
+                    {/* Site name skeleton */}
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="w-4 h-4 rounded-full" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+
+                    {/* Description skeleton */}
+                    <div className="space-y-2 mt-1">
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-5/6" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
           ) : links.length > 0 ? (
             <div className="w-full">
               <h2 className="text-lg font-semibold mb-4 text-foreground">Your Saved Links</h2>
