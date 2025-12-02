@@ -12,20 +12,33 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { HelpCircle, UserSearch as UserStar, ExternalLink } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, ExternalLink, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
+import { createClient } from "@/utils/supabase/client"
 
 /*eslint-disable*/
-export function LinkPreviewCard({ preview }: { preview: any }) {
+export function LinkPreviewCard({
+  preview,
+  onDelete,
+  linkId,
+}: { preview: any; onDelete?: (id: string) => void; linkId?: string }) {
   if (!preview) return null
 
   return (
     <div className="group relative overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:scale-105">
+      {onDelete && linkId && (
+        <Button
+          onClick={() => onDelete(linkId)}
+          className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+          title="Delete link"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      )}
       {preview.image && (
         <Link href={preview.url} rel="noopener noreferrer" target="_blank">
           <div className="relative h-40 overflow-hidden bg-muted">
@@ -50,12 +63,12 @@ export function LinkPreviewCard({ preview }: { preview: any }) {
           </h3>
         </Link>
 
-        <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
+        <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
           <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
             <div className="w-2 h-2 rounded-full bg-primary"></div>
           </div>
           {preview.site_name || new URL(preview.url).hostname}
-        </p>
+        </div>
 
         <p className="text-xs text-muted-foreground line-clamp-2">
           {preview.description || "No description available"}
@@ -80,8 +93,6 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    inputRef.current?.focus()
-
     // Check authentication status
     const checkUser = async () => {
       const {
@@ -127,6 +138,12 @@ export default function Home() {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      inputRef.current?.focus()
+    }
+  }, [authLoading, user])
 
   async function handleLinkSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -176,6 +193,27 @@ export default function Home() {
     await supabase.auth.signOut()
     setPreview(null)
     toast.success("Signed out successfully!")
+  }
+
+  // delete links function
+  const deleteLinks = async (linkId: string) => {
+    try {
+      const res = await fetch(`/api/links/${linkId}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        toast.error(error.error || "Failed to delete link!")
+        return
+      }
+
+      setLinks(links.filter((link) => link.id !== linkId))
+      toast.success("Link deleted successfully!")
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong")
+    }
   }
 
   return (
@@ -321,7 +359,7 @@ export default function Home() {
               <h2 className="text-lg font-semibold mb-4 text-foreground">Your Saved Links</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
                 {links.map((link) => (
-                  <LinkPreviewCard key={link.id} preview={link} />
+                  <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} />
                 ))}
               </div>
             </div>
