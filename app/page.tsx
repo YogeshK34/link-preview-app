@@ -21,6 +21,7 @@ import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/utils/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Toggle } from "@/components/ui/toggle"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 /*eslint-disable */
 export function LinkPreviewCard({
@@ -353,34 +354,44 @@ export default function Home() {
                   </CardDescription>
                 </div>
 
-                <CardAction>
-                  {user ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full">
-                            <Avatar>
-                              <AvatarImage
-                                src={user.user_metadata?.avatar_url || "/placeholder.svg"}
-                                alt={user.email || "User"}
-                              />
-                              <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Click to sign out</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : (
-                    <Avatar>
-                      <AvatarFallback>
-                        <UserStar />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </CardAction>
+                <CardAction className="flex items-center gap-2">
+  {user ? (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            className="rounded-full"
+          >
+            <Avatar>
+              <AvatarImage
+                src={user.user_metadata?.avatar_url || "/placeholder.svg"}
+                alt={user.email || "User"}
+              />
+              <AvatarFallback>
+                {user.email?.[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Click to sign out</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : (
+    <Avatar>
+      <AvatarFallback>
+        <UserStar />
+      </AvatarFallback>
+    </Avatar>
+  )}
+
+  <ThemeToggle />
+</CardAction>
+
               </div>
             </CardHeader>
 
