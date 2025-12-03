@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { HelpCircle, UserSearch as UserStar, ExternalLink, Trash2, Copy, Check } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, ExternalLink, Trash2, Copy, Check, Share2 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -22,8 +22,7 @@ import { createClient } from "@/utils/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Toggle } from "@/components/ui/toggle"
 
-
-/*eslint-disable*/
+/*eslint-disable */
 export function LinkPreviewCard({
   preview,
   onDelete,
@@ -46,7 +45,44 @@ export function LinkPreviewCard({
       setTimeout(() => setIsCopied(false), 1500)
     } catch (error) {
       console.error(error)
-      toast.error("Error copying link!");
+      toast.error("Unable to copy link!")
+    }
+  }
+
+  const shareLink = async () => {
+    if (
+      navigator.share &&
+      navigator.canShare?.({
+        title: preview.title,
+        text: preview.description,
+        url: preview.url,
+      })
+    ) {
+      try {
+        await navigator.share({
+          title: preview.title,
+          text: preview.description,
+          url: preview.url,
+        })
+        toast.success("Link shared successfully!");
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return
+        }
+        console.error(error)
+        await copyLinkFallback()
+      }
+    } else {
+      await copyLinkFallback()
+    }
+  }
+
+  const copyLinkFallback = async () => {
+    try {
+      await navigator.clipboard.writeText(preview.url)
+      toast.info("Sharing not supported on this browser. Link copied to clipboard!");
+    } catch (error) {
+      toast.error("Unable to copy link!");
     }
   }
 
@@ -79,8 +115,8 @@ export function LinkPreviewCard({
             </h3>
           </Link>
 
-          {/* Action buttons in header */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Copy button */}
             <Toggle
               onClick={copyLink}
               size="sm"
@@ -91,16 +127,22 @@ export function LinkPreviewCard({
               {isCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
             </Toggle>
 
+            {/* Share button */}
+            <Toggle onClick={shareLink} size="sm" variant="outline" className="h-7 px-2" title="Share link">
+              <Share2 className="w-4 h-4" />
+            </Toggle>
+
+            {/* Delete button */}
             {onDelete && linkId && (
-              <Button
+              <Toggle
                 onClick={() => onDelete(linkId)}
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 hover:bg-destructive/10 hover:text-destructive"
                 title="Delete link"
               >
                 <Trash2 className="w-4 h-4" />
-              </Button>
+              </Toggle>
             )}
           </div>
         </div>
@@ -121,7 +163,6 @@ export function LinkPreviewCard({
     </div>
   )
 }
-
 
 
 const supabase = createClient()
