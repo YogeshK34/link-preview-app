@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { HelpCircle, UserSearch as UserStar, ExternalLink, Trash2 } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, ExternalLink, Trash2, Copy, Check } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -20,26 +20,39 @@ import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/utils/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Toggle } from "@/components/ui/toggle"
+
 
 /*eslint-disable*/
 export function LinkPreviewCard({
   preview,
   onDelete,
   linkId,
-}: { preview: any; onDelete?: (id: string) => void; linkId?: string }) {
+}: {
+  preview: any
+  onDelete?: (id: string) => void
+  linkId?: string
+}) {
+  const [isCopied, setIsCopied] = useState<boolean>(false)
+  // const { toast } = useToast()
+
   if (!preview) return null
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(preview.url)
+      setIsCopied(true)
+      toast.success("Link copied!");
+      setTimeout(() => setIsCopied(false), 1500)
+    } catch (error) {
+      console.error(error)
+      toast.error("Error copying link!");
+    }
+  }
+
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:scale-105">
-      {onDelete && linkId && (
-        <Button
-          onClick={() => onDelete(linkId)}
-          className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-          title="Delete link"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      )}
+    <div className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-md hover:scale-[1.02]">
+      {/* Image Preview */}
       {preview.image && (
         <Link href={preview.url} rel="noopener noreferrer" target="_blank">
           <div className="relative h-40 overflow-hidden bg-muted">
@@ -57,20 +70,50 @@ export function LinkPreviewCard({
         </Link>
       )}
 
+      {/* Content Section */}
       <div className="p-4">
-        <Link href={preview.url} rel="noopener noreferrer" target="_blank">
-          <h3 className="font-semibold text-sm line-clamp-2 text-foreground hover:text-primary transition-colors mb-2">
-            {preview.title || "No Title"}
-          </h3>
-        </Link>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <Link href={preview.url} rel="noopener noreferrer" target="_blank">
+            <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-foreground hover:text-primary transition-colors">
+              {preview.title || "No Title"}
+            </h3>
+          </Link>
 
-        <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <div className="w-2 h-2 rounded-full bg-primary"></div>
+          {/* Action buttons in header */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Toggle
+              onClick={copyLink}
+              size="sm"
+              variant="outline"
+              className="h-7 px-2"
+              title={isCopied ? "Copied!" : "Copy link"}
+            >
+              {isCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+            </Toggle>
+
+            {onDelete && linkId && (
+              <Button
+                onClick={() => onDelete(linkId)}
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                title="Delete link"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
-          {preview.site_name || new URL(preview.url).hostname}
         </div>
 
+        {/* Site info */}
+        <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+          </div>
+          <span className="truncate">{preview.site_name || new URL(preview.url).hostname}</span>
+        </div>
+
+        {/* Description */}
         <p className="text-xs text-muted-foreground line-clamp-2">
           {preview.description || "No description available"}
         </p>
@@ -78,6 +121,8 @@ export function LinkPreviewCard({
     </div>
   )
 }
+
+
 
 const supabase = createClient()
 
