@@ -332,14 +332,14 @@ const deleteLinks = async (linkId: string): Promise<void> => {
           ) : null}
 
           {linksLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
                   {/* Image skeleton */}
                   <Skeleton className="w-full h-40" />
 
                   {/* Content */}
-                  <div className="flex-1 flex flex-col p-4 gap-3">
+                  <div className="flex-1 flex flex-col p-3 sm:p-4 gap-3">
                     {/* Title skeleton */}
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-full" />
@@ -364,26 +364,28 @@ const deleteLinks = async (linkId: string): Promise<void> => {
 
           ) : links.length > 0 ? (
             <div className="w-full">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                 <h2 className="text-lg font-semibold text-foreground">Your Saved Links</h2>
-                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
-                  <ToggleGroupItem value="grid" aria-label="Grid view">
-                    <LayoutGrid className="h-4 w-4" />
+                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")} className="w-full sm:w-auto">
+                  <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
+                    <LayoutGrid className="h-4 w-4 sm:mr-0" />
+                    <span className="ml-2 sm:hidden">Grid</span>
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="list" aria-label="List view">
-                    <List className="h-4 w-4" />
+                  <ToggleGroupItem value="list" aria-label="List view" className="flex-1 sm:flex-none">
+                    <List className="h-4 w-4 sm:mr-0" />
+                    <span className="ml-2 sm:hidden">List</span>
                   </ToggleGroupItem>
                 </ToggleGroup>
               </div>
               
               {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
                   {links.map((link) => (
                     <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} />
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col gap-4 w-full">
+                <div className="flex flex-col gap-3 sm:gap-4 w-full">
                   {links.map((link) => (
                     <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} isListView />
                   ))}

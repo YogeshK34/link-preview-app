@@ -90,7 +90,7 @@ const handleDeleteClick = async () => {
       {/* Image Preview */}
       {preview.image && (
         <Link href={preview.url} rel="noopener noreferrer" target="_blank">
-          <div className={`relative overflow-hidden bg-muted ${isListView ? 'w-48 h-32 flex-shrink-0' : 'h-40 w-full'}`}>
+          <div className={`relative overflow-hidden bg-muted flex-shrink-0 ${isListView ? 'w-32 h-24 sm:w-48 sm:h-32' : 'h-40 w-full'}`}>
             <img
               src={preview.image || "/placeholder.png"}
               alt={preview.title}
@@ -98,36 +98,36 @@ const handleDeleteClick = async () => {
               height={300}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-end p-3">
-              <ExternalLink className="w-5 h-5 text-white" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-end p-2 sm:p-3">
+              <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
           </div>
         </Link>
       )}
 
       {/* Content Section */}
-      <div className={`p-4 ${isListView ? 'flex-1 flex flex-col justify-between' : ''}`}>
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <Link href={preview.url} rel="noopener noreferrer" target="_blank">
-            <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-foreground hover:text-primary transition-colors">
+      <div className={`p-3 sm:p-4 ${isListView ? 'flex-1 flex flex-col justify-between min-w-0' : ''}`}>
+        <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
+          <Link href={preview.url} rel="noopener noreferrer" target="_blank" className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2 text-foreground hover:text-primary transition-colors">
               {preview.title || "No Title"}
             </h3>
           </Link>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
             {/* Copy button */}
             <Toggle
               onClick={copyLink}
               size="sm"
               variant="outline"
-              className="h-7 px-2"
+              className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
               title={isCopied ? "Copied!" : "Copy link"}
             >
               {isCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
             </Toggle>
 
             {/* Share button */}
-            <Toggle onClick={shareLink} size="sm" variant="outline" className="h-7 px-2" title="Share link">
+            <Toggle onClick={shareLink} size="sm" variant="outline" className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2" title="Share link">
               <Share2 className="w-4 h-4" />
             </Toggle>
 
@@ -138,7 +138,7 @@ const handleDeleteClick = async () => {
                 disabled={isDeleting}
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 hover:bg-destructive/10 hover:text-destructive"
+                className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2 hover:bg-destructive/10 hover:text-destructive"
                 title="Delete link"
               >
                 {isDeleting ? (
@@ -152,7 +152,7 @@ const handleDeleteClick = async () => {
         </div>
 
         {/* Site info */}
-        <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+        <div className="text-xs sm:text-sm text-muted-foreground mb-2 flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
           </div>
@@ -160,7 +160,7 @@ const handleDeleteClick = async () => {
         </div>
 
         {/* Description */}
-        <p className="text-xs text-muted-foreground line-clamp-2">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
           {preview.description || "No description available"}
         </p>
       </div>
