@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { HelpCircle, UserSearch as UserStar } from "lucide-react"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -36,6 +37,7 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [links, setLinks] = useState<any[]>([])
   const [linksLoading, setIsLinksLoading] = useState<boolean>(true)
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const router = useRouter()
 
   useEffect(() => {
@@ -362,12 +364,31 @@ const deleteLinks = async (linkId: string): Promise<void> => {
 
           ) : links.length > 0 ? (
             <div className="w-full">
-              <h2 className="text-lg font-semibold mb-4 text-foreground">Your Saved Links</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
-                {links.map((link) => (
-                  <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} />
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-foreground">Your Saved Links</h2>
+                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
+                  <ToggleGroupItem value="grid" aria-label="Grid view">
+                    <LayoutGrid className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="list" aria-label="List view">
+                    <List className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
+              
+              {viewMode === "grid" ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+                  {links.map((link) => (
+                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 w-full">
+                  {links.map((link) => (
+                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} isListView />
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <Empty>

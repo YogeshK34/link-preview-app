@@ -10,10 +10,12 @@ export function LinkPreviewCard({
   preview,
   onDelete,
   linkId,
+  isListView = false,
 }: {
   preview: any
   onDelete?: (id: string) => Promise<void>
   linkId?: string
+  isListView?: boolean
 }) {
   const [isCopied, setIsCopied] = useState<boolean>(false)
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -84,11 +86,11 @@ const handleDeleteClick = async () => {
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-md hover:scale-[1.02]">
+    <div className={`group relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-md ${isListView ? 'flex flex-row' : 'flex flex-col hover:scale-[1.02]'}`}>
       {/* Image Preview */}
       {preview.image && (
         <Link href={preview.url} rel="noopener noreferrer" target="_blank">
-          <div className="relative h-40 overflow-hidden bg-muted">
+          <div className={`relative overflow-hidden bg-muted ${isListView ? 'w-48 h-32 flex-shrink-0' : 'h-40 w-full'}`}>
             <img
               src={preview.image || "/placeholder.png"}
               alt={preview.title}
@@ -104,7 +106,7 @@ const handleDeleteClick = async () => {
       )}
 
       {/* Content Section */}
-      <div className="p-4">
+      <div className={`p-4 ${isListView ? 'flex-1 flex flex-col justify-between' : ''}`}>
         <div className="flex items-start justify-between gap-3 mb-3">
           <Link href={preview.url} rel="noopener noreferrer" target="_blank">
             <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-foreground hover:text-primary transition-colors">
