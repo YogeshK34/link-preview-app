@@ -314,6 +314,12 @@ export default function Home() {
 
       setPreview(data.data)
       toast.success("Link submitted successfully!")
+
+      setTimeout(() => {
+        setLinks((prevLinks) => [data.data, ...prevLinks])
+        setInput("")
+        setPreview(null)
+      }, 3500)
     } catch (error) {
       toast.error("Something went wrong.")
     } finally {

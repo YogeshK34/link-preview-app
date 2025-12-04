@@ -58,6 +58,19 @@ export async function POST(request: NextRequest) {
             return "";
         };
 
+        // Fallback images from public folder
+        const fallbackImages = [
+            "/image1.png",
+            "/image2.png",
+            "/image3.png",
+            "/image4.png",
+        ];
+
+        // Get random fallback image
+        const getRandomFallback = () => {
+            return fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
+        };
+
         // extract the data 
         const ogData = {
             url: link,
@@ -65,7 +78,7 @@ export async function POST(request: NextRequest) {
 
             description: getMeta("og:description", "twitter:description", "description") || "",
 
-            image: getMeta("og:image", "twitter:image") || "/placeholder.png",
+            image: getMeta("og:image", "twitter:image") || getRandomFallback(),
 
             site_name: getMeta("og:site_name", "application-name") || "",
 
