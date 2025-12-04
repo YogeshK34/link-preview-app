@@ -30,11 +30,25 @@ export function LinkPreviewCard({
   linkId,
 }: {
   preview: any
-  onDelete?: (id: string) => void
+  onDelete?: (id: string) => Promise<void>
   linkId?: string
 }) {
   const [isCopied, setIsCopied] = useState<boolean>(false)
-  // const { toast } = useToast()
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // wrap the onDelete inside a helper function 
+const handleDeleteClick = async () => {
+  if (isDeleting || !linkId || !onDelete) return;
+
+  setIsDeleting(true);
+  try {
+    await onDelete(linkId);
+  } catch (error) {
+    console.error("Delete failed:", error);
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   if (!preview) return null
 
@@ -136,13 +150,18 @@ export function LinkPreviewCard({
             {/* Delete button */}
             {onDelete && linkId && (
               <Toggle
-                onClick={() => onDelete(linkId)}
+                onClick={handleDeleteClick}
+                disabled={isDeleting}
                 size="sm"
                 variant="outline"
                 className="h-7 px-2 hover:bg-destructive/10 hover:text-destructive"
                 title="Delete link"
               >
-                <Trash2 className="w-4 h-4" />
+                {isDeleting ? (
+                  <Spinner className="w-4 h-4" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
               </Toggle>
             )}
           </div>
@@ -258,6 +277,9 @@ export default function Home() {
   async function handleLinkSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    // this'll prevent double-submission 
+    if (loading) return;
+
     // Check if user is authenticated
     if (!user) {
       toast.error("Please sign in to submit links", {
@@ -266,31 +288,31 @@ export default function Home() {
           onClick: () => router.push("/login"),
         },
       })
-      return
+      return;
     }
 
     if (input.trim() === "") {
       toast.warning("Input cannot be empty!")
-      return
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const res = await fetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ link: input }),
-      })
+      });
+
+      const data = await res.json();
 
       if (!res.ok) {
-        const err = await res.json()
-        toast.error(err.error)
+        toast.error(data.error)
         return
       }
 
-      const body = await res.json()
-      setPreview(body.data)
+      setPreview(data.data)
       toast.success("Link submitted successfully!")
     } catch (error) {
       toast.error("Something went wrong.")
@@ -306,25 +328,27 @@ export default function Home() {
   }
 
   // delete links function
-  const deleteLinks = async (linkId: string) => {
-    try {
-      const res = await fetch(`/api/links/${linkId}`, {
-        method: "DELETE",
-      })
+const deleteLinks = async (linkId: string): Promise<void> => {
+  try {
+    const res = await fetch(`/api/links/${linkId}`, {
+      method: "DELETE",
+    })
 
-      if (!res.ok) {
-        const error = await res.json()
-        toast.error(error.error || "Failed to delete link!")
-        return
-      }
-
-      setLinks(links.filter((link) => link.id !== linkId))
-      toast.success("Link deleted successfully!")
-    } catch (error) {
-      console.error(error)
-      toast.error("Something went wrong")
+    if (!res.ok) {
+      const error = await res.json()
+      toast.error(error.error || "Failed to delete link!")
+      return 
     }
+
+    setLinks(links.filter((link) => link.id !== linkId))
+    toast.success("Link deleted successfully!")
+    return
+  } catch (error) {
+    console.error(error)
+    toast.error("Something went wrong")
+    return  // ← Change: return false instead of throwing
   }
+}
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background px-4 py-8">
@@ -355,42 +379,42 @@ export default function Home() {
                 </div>
 
                 <CardAction className="flex items-center gap-2">
-  {user ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="rounded-full"
-          >
-            <Avatar>
-              <AvatarImage
-                src={user.user_metadata?.avatar_url || "/placeholder.svg"}
-                alt={user.email || "User"}
-              />
-              <AvatarFallback>
-                {user.email?.[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Click to sign out</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  ) : (
-    <Avatar>
-      <AvatarFallback>
-        <UserStar />
-      </AvatarFallback>
-    </Avatar>
-  )}
+                  {user ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleSignOut}
+                            className="rounded-full"
+                          >
+                            <Avatar>
+                              <AvatarImage
+                                src={user.user_metadata?.avatar_url || "/placeholder.svg"}
+                                alt={user.email || "User"}
+                              />
+                              <AvatarFallback>
+                                {user.email?.[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Click to sign out</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Avatar>
+                      <AvatarFallback>
+                        <UserStar />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
 
-  <ThemeToggle />
-</CardAction>
+                  <ThemeToggle />
+                </CardAction>
 
               </div>
             </CardHeader>
