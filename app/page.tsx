@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
@@ -22,6 +21,7 @@ import { createClient } from "@/utils/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LinkPreviewCard } from "@/components/link-preview-card"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 
 // creating outside to prevent multiple client creations
 const supabase = createClient()
@@ -65,7 +65,7 @@ export default function Home() {
 
 
   useEffect(() => {
-    if (authLoading) return 
+    if (authLoading) return
 
     const fetchData = async () => {
       try {
@@ -156,6 +156,7 @@ export default function Home() {
         setInput("")
         setPreview(null)
       }, 3500)
+
     } catch (error) {
       toast.error("Something went wrong.")
     } finally {
@@ -170,27 +171,27 @@ export default function Home() {
   }
 
   // delete links function
-const deleteLinks = async (linkId: string): Promise<void> => {
-  try {
-    const res = await fetch(`/api/links/${linkId}`, {
-      method: "DELETE",
-    })
+  const deleteLinks = async (linkId: string): Promise<void> => {
+    try {
+      const res = await fetch(`/api/links/${linkId}`, {
+        method: "DELETE",
+      })
 
-    if (!res.ok) {
-      const error = await res.json()
-      toast.error(error.error || "Failed to delete link!")
-      return 
+      if (!res.ok) {
+        const error = await res.json()
+        toast.error(error.error || "Failed to delete link!")
+        return
+      }
+
+      setLinks(links.filter((link) => link.id !== linkId))
+      toast.success("Link deleted successfully!")
+      return
+    } catch (error) {
+      console.error(error)
+      toast.error("Something went wrong")
+      return  // ← Change: return false instead of throwing
     }
-
-    setLinks(links.filter((link) => link.id !== linkId))
-    toast.success("Link deleted successfully!")
-    return
-  } catch (error) {
-    console.error(error)
-    toast.error("Something went wrong")
-    return  // ← Change: return false instead of throwing
   }
-}
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background px-4 py-8">
@@ -207,16 +208,6 @@ const deleteLinks = async (linkId: string): Promise<void> => {
                     ) : (
                       "Store your desired GitHub links easily"
                     )}
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="w-4 h-4" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Add your social/profile links to get a preview card.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
                   </CardDescription>
                 </div>
 
@@ -268,16 +259,31 @@ const deleteLinks = async (linkId: string): Promise<void> => {
                 <div className="flex flex-col gap-5">
                   <div className="grid gap-2">
                     <Label className="text-sm font-medium text-muted-foreground">Enter the Link</Label>
-                    <Input
-                      type="text"
-                      ref={inputRef}
-                      placeholder="https://github.com"
-                      required
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      className="focus:ring-2 focus:ring-primary/50"
-                      disabled={!user}
-                    />
+                    <InputGroup className="[--radius:9999px]">
+                      <InputGroupAddon className="pl-1.5">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="w-4 h-4 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                              <p>Add your social/profile links to get a preview card.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <span>https://</span>
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="input-secure-19"
+                        type="text"
+                        ref={inputRef}
+                        placeholder="github.com"
+                        required
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        disabled={!user}
+                      />
+                    </InputGroup>
                   </div>
 
                   {!user && !authLoading && (
@@ -377,7 +383,7 @@ const deleteLinks = async (linkId: string): Promise<void> => {
                   </ToggleGroupItem>
                 </ToggleGroup>
               </div>
-              
+
               {viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
                   {links.map((link) => (

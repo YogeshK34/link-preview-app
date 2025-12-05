@@ -26,8 +26,15 @@ export async function POST(request: NextRequest) {
             );
         };
 
+        // here I'll be writing the function to avoid & add protocols
+        let normalized = link.trim();
+
+        if(!/^https?:\/\//i.test(normalized)) {
+            normalized = 'https://' + normalized;
+        }
+
         // 1. fetch the webpage HTML 
-        const response = await fetch(link, {
+        const response = await fetch(normalized, {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
                 "Accept": "text/html,application/xhtml+xml",
@@ -73,7 +80,7 @@ export async function POST(request: NextRequest) {
 
         // extract the data 
         const ogData = {
-            url: link,
+            url: normalized,
             title: getMeta("og:title", "twitter:title", "title") || $("title").text || "",
 
             description: getMeta("og:description", "twitter:description", "description") || "",
@@ -91,7 +98,7 @@ export async function POST(request: NextRequest) {
         const { data, error } = await supabase
             .from('links')
             .insert({
-                url: link,
+                url: normalized,
                 user_id: user.id,
                 title: ogData.title,
                 description: ogData.description,
