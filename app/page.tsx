@@ -12,6 +12,15 @@ import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination"
 import { HelpCircle, UserSearch as UserStar, LayoutGrid, List } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -26,7 +35,6 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/in
 // creating outside to prevent multiple client creations
 const supabase = createClient()
 
-
 /* eslint-disable */
 export default function Home() {
   const [input, setInput] = useState<string>("")
@@ -40,6 +48,59 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const router = useRouter()
 
+  // ============ PAGINATION STATES ============
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const itemsPerPage = 6 // You can adjust this number based on your UI preference
+
+  // Calculate total pages
+  const totalPages = Math.ceil(links.length / itemsPerPage)
+
+  // Calculate current items to display
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentLinks = links.slice(indexOfFirstItem, indexOfLastItem)
+
+  // Function to handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    // Scroll to top of links section when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    const maxVisible = 5
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      pages.push(1)
+
+      let start = Math.max(2, currentPage - 1)
+      let end = Math.min(totalPages - 1, currentPage + 1)
+
+      if (start > 2) {
+        pages.push('ellipsis-start')
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+
+      if (end < totalPages - 1) {
+        pages.push('ellipsis-end')
+      }
+
+      pages.push(totalPages)
+    }
+
+    return pages
+  }
+  // ============================================
+
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -52,17 +113,20 @@ export default function Home() {
 
     checkUser()
 
-    // Listen for login/logout events
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+
+      if (!session?.user) {
+        setLinks([])
+        setPreview(null)
+        setCurrentPage(1)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
-
-
 
   useEffect(() => {
     if (authLoading) return
@@ -89,6 +153,8 @@ export default function Home() {
 
         const body = await res.json()
         setLinks(body.links)
+        // Reset to page 1 when links are loaded
+        setCurrentPage(1)
 
       } catch (error) {
         console.error(error)
@@ -102,21 +168,17 @@ export default function Home() {
     fetchData()
   }, [authLoading, user])
 
-
   useEffect(() => {
     if (!authLoading && user) {
       inputRef.current?.focus()
     }
   }, [authLoading, user])
 
-
   async function handleLinkSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    // this'll prevent double-submission 
     if (loading) return;
 
-    // Check if user is authenticated
     if (!user) {
       toast.error("Please sign in to submit links", {
         action: {
@@ -155,6 +217,8 @@ export default function Home() {
         setLinks((prevLinks) => [data.data, ...prevLinks])
         setInput("")
         setPreview(null)
+        // Reset to page 1 when new link is added
+        setCurrentPage(1)
       }, 3500)
 
     } catch (error) {
@@ -167,10 +231,11 @@ export default function Home() {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setPreview(null)
+    setLinks([])
+    setCurrentPage(1)
     toast.success("Signed out successfully!")
   }
 
-  // delete links function
   const deleteLinks = async (linkId: string): Promise<void> => {
     try {
       const res = await fetch(`/api/links/${linkId}`, {
@@ -185,11 +250,18 @@ export default function Home() {
 
       setLinks(links.filter((link) => link.id !== linkId))
       toast.success("Link deleted successfully!")
+
+      // Adjust current page if needed after deletion
+      const newTotalPages = Math.ceil((links.length - 1) / itemsPerPage)
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages)
+      }
+
       return
     } catch (error) {
       console.error(error)
       toast.error("Something went wrong")
-      return  // ← Change: return false instead of throwing
+      return
     }
   }
 
@@ -341,24 +413,16 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
-                  {/* Image skeleton */}
                   <Skeleton className="w-full h-40" />
-
-                  {/* Content */}
                   <div className="flex-1 flex flex-col p-3 sm:p-4 gap-3">
-                    {/* Title skeleton */}
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-3/4" />
                     </div>
-
-                    {/* Site name skeleton */}
                     <div className="flex items-center gap-1.5">
                       <Skeleton className="w-4 h-4 rounded-full" />
                       <Skeleton className="h-3 w-24" />
                     </div>
-
-                    {/* Description skeleton */}
                     <div className="space-y-2 mt-1">
                       <Skeleton className="h-3 w-full" />
                       <Skeleton className="h-3 w-5/6" />
@@ -371,7 +435,12 @@ export default function Home() {
           ) : links.length > 0 ? (
             <div className="w-full">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                <h2 className="text-lg font-semibold text-foreground">Your Saved Links</h2>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Your Saved Links</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, links.length)} of {links.length} links
+                  </p>
+                </div>
                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")} className="w-full sm:w-auto">
                   <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
                     <LayoutGrid className="h-4 w-4 sm:mr-0" />
@@ -386,15 +455,54 @@ export default function Home() {
 
               {viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
-                  {links.map((link) => (
+                  {currentLinks.map((link) => (
                     <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} />
                   ))}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 sm:gap-4 w-full">
-                  {links.map((link) => (
+                  {currentLinks.map((link) => (
                     <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} isListView />
                   ))}
+                </div>
+              )}
+
+              {/*PAGINATION COMPONENT*/}
+              {totalPages > 1 && (
+                <div className="mt-8 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+
+                      {getPageNumbers().map((page, index) => (
+                        <PaginationItem key={index}>
+                          {typeof page === 'number' ? (
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          ) : (
+                            <PaginationEllipsis />
+                          )}
+                        </PaginationItem>
+                      ))}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </div>
