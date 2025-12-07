@@ -50,7 +50,7 @@ export default function Home() {
 
   // ============ PAGINATION STATES ============
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const itemsPerPage = 6 // You can adjust this number based on your UI preference
+  const [itemsPerPage, setItemsPerPage] = useState<number>(6)
 
   // Calculate total pages
   const totalPages = Math.ceil(links.length / itemsPerPage)
@@ -100,6 +100,38 @@ export default function Home() {
     return pages
   }
   // ============================================
+
+  // ============ RESPONSIVE ITEMS PER PAGE ============
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      const width = window.innerWidth
+      if (width < 640) {
+        // Mobile: 1 column
+        setItemsPerPage(3)
+      } else if (width < 1024) {
+        // Tablet: 2 columns
+        setItemsPerPage(4)
+      } else {
+        // Desktop: 3 columns
+        setItemsPerPage(6)
+      }
+    }
+
+    // Set initial value
+    updateItemsPerPage()
+
+    // Add resize listener
+    window.addEventListener('resize', updateItemsPerPage)
+
+    // Cleanup
+    return () => window.removeEventListener('resize', updateItemsPerPage)
+  }, [])
+
+  // Reset to page 1 when itemsPerPage changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
+  // ===================================================
 
   useEffect(() => {
     const checkUser = async () => {
@@ -278,7 +310,7 @@ export default function Home() {
                     {user ? (
                       <span className="flex items-center gap-2">Signed in as {user.email}</span>
                     ) : (
-                      "Store your desired GitHub links easily"
+                      "Store your desired url's easily"
                     )}
                   </CardDescription>
                 </div>
@@ -354,6 +386,7 @@ export default function Home() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         disabled={!user}
+                        autoComplete="off"
                       />
                     </InputGroup>
                   </div>
@@ -411,7 +444,7 @@ export default function Home() {
 
           {linksLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
                   <Skeleton className="w-full h-40" />
                   <div className="flex-1 flex flex-col p-3 sm:p-4 gap-3">
@@ -577,31 +610,6 @@ export default function Home() {
                 <li>Sites requiring login before viewing</li>
               </ul>
               <p>In such cases, a fallback preview is shown using the domain name.</p>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="item-6">
-            <AccordionTrigger>Upcoming Features</AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance">
-              <p>Here are some features planned for future releases:</p>
-              <ul className="list-disc ml-6 space-y-2">
-                <li>Save and organize links permanently</li>
-                <li>Custom categories and tags</li>
-                <li>Dark/light mode support</li>
-                <li>Favicon and platform detection</li>
-                <li>Grid view for multiple previews</li>
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-7">
-            <AccordionTrigger>Troubleshooting</AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance">
-              <p>If a preview doesn't load, try these steps:</p>
-              <ul className="list-disc ml-6 space-y-2">
-                <li>Check if the website exposes OpenGraph tags</li>
-                <li>Ensure the URL starts with http:// or https://</li>
-                <li>Try refreshing the page and submitting again</li>
-              </ul>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
