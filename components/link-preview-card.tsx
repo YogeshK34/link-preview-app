@@ -110,7 +110,7 @@ const handleDeleteClick = async () => {
         <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
           <Link href={preview.url} rel="noopener noreferrer" target="_blank" className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2 text-foreground hover:text-primary transition-colors">
-              {preview.title || "No Title"}
+              {preview.title || preview.site_name || new URL(preview.url).hostname}
             </h3>
           </Link>
 

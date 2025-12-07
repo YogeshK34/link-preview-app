@@ -21,7 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -46,11 +46,13 @@ export default function Home() {
   const [links, setLinks] = useState<any[]>([])
   const [linksLoading, setIsLinksLoading] = useState<boolean>(true)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const router = useRouter()
 
   // ============ PAGINATION STATES ============
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage, setItemsPerPage] = useState<number>(6)
+  const [skeletonCount, setSkeletonCount] = useState<number>(3)
 
   // Calculate total pages
   const totalPages = Math.ceil(links.length / itemsPerPage)
@@ -108,12 +110,15 @@ export default function Home() {
       if (width < 640) {
         // Mobile: 1 column
         setItemsPerPage(3)
+        setSkeletonCount(2)
       } else if (width < 1024) {
         // Tablet: 2 columns
         setItemsPerPage(4)
+        setSkeletonCount(4)
       } else {
         // Desktop: 3 columns
         setItemsPerPage(6)
+        setSkeletonCount(3)
       }
     }
 
@@ -199,6 +204,31 @@ export default function Home() {
 
     fetchData()
   }, [authLoading, user])
+
+  const handleRefreshLinks = async () => {
+    if (!user || isRefreshing) return
+
+    setIsRefreshing(true)
+    try {
+      const res = await fetch("/api/links", { method: "GET" })
+
+      if (!res.ok) {
+        const err = await res.json()
+        toast.error(err.error || "Failed to refresh links")
+        return
+      }
+
+      const body = await res.json()
+      setLinks(body.links)
+      setCurrentPage(1)
+      toast.success("Links refreshed successfully!")
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to refresh links!")
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -444,7 +474,7 @@ export default function Home() {
 
           {linksLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
-              {[1, 2, 3, 4].map((i) => (
+              {Array.from({ length: skeletonCount }).map((_, i) => (
                 <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
                   <Skeleton className="w-full h-40" />
                   <div className="flex-1 flex flex-col p-3 sm:p-4 gap-3">
@@ -474,16 +504,36 @@ export default function Home() {
                     Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, links.length)} of {links.length} links
                   </p>
                 </div>
-                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")} className="w-full sm:w-auto">
-                  <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
-                    <LayoutGrid className="h-4 w-4 sm:mr-0" />
-                    <span className="ml-2 sm:hidden">Grid</span>
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="list" aria-label="List view" className="flex-1 sm:flex-none">
-                    <List className="h-4 w-4 sm:mr-0" />
-                    <span className="ml-2 sm:hidden">List</span>
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleRefreshLinks}
+                          disabled={isRefreshing}
+                          className="shrink-0"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Refresh links</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")} className="w-full sm:w-auto">
+                    <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
+                      <LayoutGrid className="h-4 w-4 sm:mr-0" />
+                      <span className="ml-2 sm:hidden">Grid</span>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="list" aria-label="List view" className="flex-1 sm:flex-none">
+                      <List className="h-4 w-4 sm:mr-0" />
+                      <span className="ml-2 sm:hidden">List</span>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
               </div>
 
               {viewMode === "grid" ? (
