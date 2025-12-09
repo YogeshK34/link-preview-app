@@ -29,23 +29,31 @@ export async function POST(request: NextRequest) {
         // here I'll be writing the function to avoid & add protocols
         let normalized = link.trim();
 
-        if(!/^https?:\/\//i.test(normalized)) {
+        // Add protocol if missing
+        if (!/^https?:\/\//i.test(normalized)) {
             normalized = 'https://' + normalized;
         }
+
+        // Remove www. from the URL
+        normalized = normalized.replace(/^(https?:\/\/)www\./i, '$1');
 
         // 1. fetch the webpage HTML 
         const response = await fetch(normalized, {
             headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-                "Accept": "text/html,application/xhtml+xml",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                 "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
             },
             cache: "no-store",
         });
 
         if (!response.ok) {
+            console.error(`Failed to fetch ${normalized}: ${response.status} ${response.statusText}`);
             return NextResponse.json(
-                { error: "Failed to fetch URL" },
+                { error: `Failed to fetch URL: ${response.status} ${response.statusText}` },
                 { status: 400 }
             );
         };
