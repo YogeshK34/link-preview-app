@@ -276,7 +276,18 @@ export default function Home() {
       toast.success("Link submitted successfully!")
 
       setTimeout(() => {
-        setLinks((prevLinks) => [data.data, ...prevLinks])
+        setLinks((prevLinks) => {
+          const updatedLinks = [data.data, ...prevLinks]
+          // Sort to maintain pinned-first order
+          return updatedLinks.sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1
+            if (!a.pinned && b.pinned) return 1
+            if (a.pinned && b.pinned) {
+              return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime()
+            }
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          })
+        })
         setInput("")
         setPreview(null)
         // Reset to page 1 when new link is added
@@ -325,6 +336,23 @@ export default function Home() {
       toast.error("Something went wrong")
       return
     }
+  }
+
+  const handlePinToggle = (linkId: string, pinned: boolean, pinned_at: string | null) => {
+    setLinks((prevLinks) => {
+      const updatedLinks = prevLinks.map((link) => 
+        link.id === linkId ? { ...link, pinned, pinned_at } : link
+      )
+      // Re-sort: pinned items first, then by pinned_at or created_at
+      return updatedLinks.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1
+        if (!a.pinned && b.pinned) return 1
+        if (a.pinned && b.pinned) {
+          return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime()
+        }
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+    })
   }
 
   return (
@@ -470,7 +498,7 @@ export default function Home() {
               <h2 className="text-lg font-semibold mb-4 text-foreground">Latest Preview</h2>
               <LinkPreviewCard preview={preview} />
             </div>
-          ) : null}
+        ) : null}
 
           {linksLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
@@ -539,13 +567,13 @@ export default function Home() {
               {viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
                   {currentLinks.map((link) => (
-                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} />
+                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} />
                   ))}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 sm:gap-4 w-full">
                   {currentLinks.map((link) => (
-                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} isListView />
+                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} isListView />
                   ))}
                 </div>
               )}

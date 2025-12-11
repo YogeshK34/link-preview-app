@@ -1,4 +1,4 @@
-import { Check, Copy, ExternalLink, Share2, Trash2 } from "lucide-react";
+import { Check, Copy, ExternalLink, Pin, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,30 +9,34 @@ import { Spinner } from "./ui/spinner";
 export function LinkPreviewCard({
   preview,
   onDelete,
+  onPin,
   linkId,
   isListView = false,
 }: {
   preview: any
   onDelete?: (id: string) => Promise<void>
+  onPin?: (id: string, pinned: boolean, pinned_at: string | null) => void
   linkId?: string
   isListView?: boolean
 }) {
   const [isCopied, setIsCopied] = useState<boolean>(false)
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+  const [isPinning, setIsPinning] = useState<boolean>(false)
+  const [isPinned, setIsPinned] = useState<boolean>(preview.pinned || false)
 
   // wrap the onDelete inside a helper function 
-const handleDeleteClick = async () => {
-  if (isDeleting || !linkId || !onDelete) return;
+  const handleDeleteClick = async () => {
+    if (isDeleting || !linkId || !onDelete) return;
 
-  setIsDeleting(true);
-  try {
-    await onDelete(linkId);
-  } catch (error) {
-    console.error("Delete failed:", error);
-  } finally {
-    setIsDeleting(false);
-  }
-};
+    setIsDeleting(true);
+    try {
+      await onDelete(linkId);
+    } catch (error) {
+      console.error("Delete failed:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (!preview) return null
 
@@ -85,6 +89,45 @@ const handleDeleteClick = async () => {
     }
   }
 
+  // pin links function
+  const pinLinks = async () => {
+    if (isPinning || !linkId) return
+
+    setIsPinning(true)
+    // Optimistic update
+    const previousPinned = isPinned
+    setIsPinned(!isPinned)
+
+    try {
+      const res = await fetch(`/api/links/${linkId}`, {
+        method: 'PATCH',
+        headers: { "Content-Type": "application/json" },
+      })
+
+      if (!res.ok) {
+        // Revert on error
+        setIsPinned(previousPinned)
+        const errorData = await res.json()
+        toast.error(errorData.error || "Failed to update pin status")
+        return
+      }
+
+      const data = await res.json()
+      // Update parent component's state
+      if (onPin && linkId && data.data) {
+        onPin(linkId, data.data.pinned, data.data.pinned_at)
+      }
+      toast.success(data.message || (isPinned ? "Link unpinned!" : "Link pinned!"))
+
+    } catch (error) {
+      // Revert on error
+      setIsPinned(previousPinned)
+      console.error("Pin toggle failed:", error)
+      toast.error("Unable to update pin status!")
+    } finally {
+      setIsPinning(false)
+    }
+  };
   return (
     <div className={`group relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-md ${isListView ? 'flex flex-row' : 'flex flex-col hover:scale-[1.02]'}`}>
       {/* Image Preview */}
@@ -129,6 +172,23 @@ const handleDeleteClick = async () => {
             {/* Share button */}
             <Toggle onClick={shareLink} size="sm" variant="outline" className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2" title="Share link">
               <Share2 className="w-4 h-4" />
+            </Toggle>
+
+            {/* Pin button */}
+            <Toggle
+              onClick={pinLinks}
+              disabled={isPinning}
+              pressed={isPinned}
+              size="sm"
+              variant="outline"
+              className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
+              title={isPinned ? "Unpin link" : "Pin link"}
+            >
+              {isPinning ? (
+                <Spinner className="w-4 h-4" />
+              ) : (
+                <Pin className={`w-4 h-4 ${isPinned ? 'fill-current text-primary' : ''}`} />
+              )}
             </Toggle>
 
             {/* Delete button */}
