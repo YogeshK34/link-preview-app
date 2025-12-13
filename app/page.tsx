@@ -627,12 +627,12 @@ export default function Home() {
                             <Button
                               variant="outline"
                               onClick={() => setIsOpen(true)}
-                              className="gap-2 shrink-0"
+                              className="gap-1 sm:gap-2 shrink-0 px-2 sm:px-4"
                             >
                               <span className="text-sm hidden sm:inline">Search</span>
-                              <KbdGroup>
-                                <Kbd>⌘</Kbd>
-                                <Kbd>K</Kbd>
+                              <KbdGroup className="gap-0.5 sm:gap-1">
+                                <Kbd className="text-xs px-1 py-0.5 h-5 min-w-[18px]">⌘</Kbd>
+                                <Kbd className="text-xs px-1 py-0.5 h-5 min-w-[18px]">K</Kbd>
                               </KbdGroup>
                             </Button>
                           </TooltipTrigger>
@@ -653,8 +653,9 @@ export default function Home() {
                         setSearchQuery(value)
                         setCurrentPage(1)
                       }}
-                      placeholder="Search by title, description, or URL..."
+                      placeholder="Search links..."
                       autoFocus
+                      className="h-10 sm:h-11"
                     />
                   </Command>
                 )}
