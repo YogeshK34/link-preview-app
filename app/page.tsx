@@ -31,6 +31,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LinkPreviewCard } from "@/components/link-preview-card"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
+import { Command, CommandInput } from "@/components/ui/command"
+import { Kbd, KbdGroup } from "@/components/ui/kbd"
 
 // creating outside to prevent multiple client creations
 const supabase = createClient()
@@ -43,10 +45,13 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [authLoading, setAuthLoading] = useState<boolean>(true)
   const inputRef = useRef<HTMLInputElement>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
   const [links, setLinks] = useState<any[]>([])
   const [linksLoading, setIsLinksLoading] = useState<boolean>(true)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const [searchQuery, setSearchQuery] = useState<string>("")
   const router = useRouter()
 
   // ============ PAGINATION STATES ============
@@ -54,13 +59,25 @@ export default function Home() {
   const [itemsPerPage, setItemsPerPage] = useState<number>(6)
   const [skeletonCount, setSkeletonCount] = useState<number>(3)
 
+  // Filter links based on search query
+  const filteredLinks = searchQuery.trim()
+    ? links.filter(link => {
+      const query = searchQuery.toLowerCase()
+      return (
+        link.title?.toLowerCase().includes(query) ||
+        link.description?.toLowerCase().includes(query) ||
+        link.url?.toLowerCase().includes(query)
+      )
+    })
+    : links
+
   // Calculate total pages
-  const totalPages = Math.ceil(links.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredLinks.length / itemsPerPage)
 
   // Calculate current items to display
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentLinks = links.slice(indexOfFirstItem, indexOfLastItem)
+  const currentLinks = filteredLinks.slice(indexOfFirstItem, indexOfLastItem)
 
   // Function to handle page changes
   const handlePageChange = (page: number) => {
@@ -122,14 +139,31 @@ export default function Home() {
       }
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsOpen(prev => !prev)
+      }
+
+      // close on escape key 
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        setSearchQuery('')
+      }
+    }
+
     // Set initial value
     updateItemsPerPage()
 
     // Add resize listener
     window.addEventListener('resize', updateItemsPerPage)
+    window.addEventListener('keydown', handleKeyDown)
 
     // Cleanup
-    return () => window.removeEventListener('resize', updateItemsPerPage)
+    return () => {
+      window.removeEventListener('resize', updateItemsPerPage)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [])
 
   // Reset to page 1 when itemsPerPage changes
@@ -236,6 +270,26 @@ export default function Home() {
     }
   }, [authLoading, user])
 
+  // Close search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+        setSearchQuery('')
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+
+
   async function handleLinkSubmit(e: React.FormEvent) {
     e.preventDefault()
 
@@ -340,7 +394,7 @@ export default function Home() {
 
   const handlePinToggle = (linkId: string, pinned: boolean, pinned_at: string | null) => {
     setLinks((prevLinks) => {
-      const updatedLinks = prevLinks.map((link) => 
+      const updatedLinks = prevLinks.map((link) =>
         link.id === linkId ? { ...link, pinned, pinned_at } : link
       )
       // Re-sort: pinned items first, then by pinned_at or created_at
@@ -498,7 +552,7 @@ export default function Home() {
               <h2 className="text-lg font-semibold mb-4 text-foreground">Latest Preview</h2>
               <LinkPreviewCard preview={preview} />
             </div>
-        ) : null}
+          ) : null}
 
           {linksLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
@@ -525,43 +579,85 @@ export default function Home() {
 
           ) : links.length > 0 ? (
             <div className="w-full">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">Your Saved Links</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, links.length)} of {links.length} links
-                  </p>
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Your Saved Links</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {searchQuery.trim() ? (
+                        <span>Found {filteredLinks.length} result{filteredLinks.length !== 1 ? 's' : ''} for "{searchQuery}"</span>
+                      ) : (
+                        <span>Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, links.length)} of {links.length} links</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleRefreshLinks}
+                            disabled={isRefreshing}
+                            className="shrink-0"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Refresh links</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")} className="w-full sm:w-auto">
+                      <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
+                        <LayoutGrid className="h-4 w-4 sm:mr-0" />
+                        <span className="ml-2 sm:hidden">Grid</span>
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="list" aria-label="List view" className="flex-1 sm:flex-none">
+                        <List className="h-4 w-4 sm:mr-0" />
+                        <span className="ml-2 sm:hidden">List</span>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                    {!isOpen && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsOpen(true)}
+                              className="gap-2 shrink-0"
+                            >
+                              <span className="text-sm hidden sm:inline">Search</span>
+                              <KbdGroup>
+                                <Kbd>⌘</Kbd>
+                                <Kbd>K</Kbd>
+                              </KbdGroup>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Search links (⌘K)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleRefreshLinks}
-                          disabled={isRefreshing}
-                          className="shrink-0"
-                        >
-                          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Refresh links</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")} className="w-full sm:w-auto">
-                    <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
-                      <LayoutGrid className="h-4 w-4 sm:mr-0" />
-                      <span className="ml-2 sm:hidden">Grid</span>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="list" aria-label="List view" className="flex-1 sm:flex-none">
-                      <List className="h-4 w-4 sm:mr-0" />
-                      <span className="ml-2 sm:hidden">List</span>
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
+
+                {isOpen && (
+                  <Command ref={searchRef} className="rounded-lg border shadow-md w-full">
+                    <CommandInput
+                      value={searchQuery}
+                      onValueChange={(value) => {
+                        setSearchQuery(value)
+                        setCurrentPage(1)
+                      }}
+                      placeholder="Search by title, description, or URL..."
+                      autoFocus
+                    />
+                  </Command>
+                )}
               </div>
 
               {viewMode === "grid" ? (
