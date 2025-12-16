@@ -37,18 +37,47 @@ export async function POST(request: NextRequest) {
         // Remove www. from the URL
         normalized = normalized.replace(/^(https?:\/\/)www\./i, '$1');
 
-        // 1. fetch the webpage HTML 
-        const response = await fetch(normalized, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive",
-                "Upgrade-Insecure-Requests": "1",
-            },
-            cache: "no-store",
-        });
+        // 1. fetch the webpage HTML with timeout and better error handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+        let response;
+        try {
+            response = await fetch(normalized, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache",
+                },
+                signal: controller.signal,
+                cache: "no-store",
+                redirect: "follow",
+                // Add next-specific config for better production performance
+                next: { revalidate: 0 }
+            });
+        } catch (fetchError) {
+            clearTimeout(timeoutId);
+            const error = fetchError as Error;
+            if (error.name === 'AbortError') {
+                console.error(`Request timeout for ${normalized}`);
+                return NextResponse.json(
+                    { error: "Request timeout. The website took too long to respond." },
+                    { status: 408 }
+                );
+            }
+            console.error(`Fetch error for ${normalized}:`, error);
+            return NextResponse.json(
+                { error: `Failed to fetch URL: ${error.message}` },
+                { status: 400 }
+            );
+        } finally {
+            clearTimeout(timeoutId);
+        }
 
         if (!response.ok) {
             console.error(`Failed to fetch ${normalized}: ${response.status} ${response.statusText}`);
@@ -59,6 +88,15 @@ export async function POST(request: NextRequest) {
         };
 
         const html = await response.text();
+
+        // Check if we actually got HTML content
+        if (!html || html.trim().length === 0) {
+            console.error(`Empty response from ${normalized}`);
+            return NextResponse.json(
+                { error: "The website returned empty content" },
+                { status: 400 }
+            );
+        }
 
         const $ = cheerio.load(html);
 
@@ -71,6 +109,23 @@ export async function POST(request: NextRequest) {
                 if (byName) return byName;
             }
             return "";
+        };
+
+        // Helper to resolve relative URLs
+        const resolveUrl = (urlString: string, baseUrl: string) => {
+            if (!urlString) return "";
+            try {
+                // If it's already absolute, return as-is
+                if (urlString.startsWith('http://') || urlString.startsWith('https://')) {
+                    return urlString;
+                }
+                // Resolve relative URL
+                const base = new URL(baseUrl);
+                return new URL(urlString, base.origin).href;
+            } catch (error) {
+                console.error(`Error resolving URL: ${urlString}`, error);
+                return urlString;
+            }
         };
 
         // Fallback images from public folder
@@ -86,21 +141,31 @@ export async function POST(request: NextRequest) {
             return fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
         };
 
-        // extract the data 
+        // extract the data with better fallbacks
+        const rawTitle = getMeta("og:title", "twitter:title") || $("title").text() || $("h1").first().text() || "";
+        const rawDescription = getMeta("og:description", "twitter:description", "description") || $('meta[name="description"]').attr("content") || "";
+        const rawImage = getMeta("og:image", "twitter:image", "twitter:image:src") || "";
+
+        // Resolve image URL (handle relative URLs)
+        const resolvedImage = rawImage ? resolveUrl(rawImage, normalized) : getRandomFallback();
+
         const ogData = {
             url: normalized,
-            title: getMeta("og:title", "twitter:title", "title") || $("title").text || "",
-
-            description: getMeta("og:description", "twitter:description", "description") || "",
-
-            image: getMeta("og:image", "twitter:image") || getRandomFallback(),
-
-            site_name: getMeta("og:site_name", "application-name") || "",
-
-            type: getMeta("og:type", "type") || "",
-
-            audio: getMeta("og:audio", "audio") || "",
+            title: rawTitle.trim() || "Untitled",
+            description: rawDescription.trim() || "No description available",
+            image: resolvedImage,
+            site_name: getMeta("og:site_name", "application-name") || new URL(normalized).hostname,
+            type: getMeta("og:type") || "website",
+            audio: getMeta("og:audio") || "",
         };
+
+        // Log extracted data for debugging in production
+        console.log(`Extracted OG data for ${normalized}:`, {
+            title: ogData.title,
+            description: ogData.description?.substring(0, 50),
+            image: ogData.image?.substring(0, 100),
+            hasContent: html.length > 0
+        });
 
         // insert into my supabase DB
         const { data, error } = await supabase
