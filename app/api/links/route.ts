@@ -37,6 +37,69 @@ export async function POST(request: NextRequest) {
         // Remove www. from the URL
         normalized = normalized.replace(/^(https?:\/\/)www\./i, '$1');
 
+        // Check if it's a YouTube URL and handle specially
+        const isYouTube = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i.test(normalized);
+        
+        if (isYouTube) {
+            console.log(`Detected YouTube URL: ${normalized}`);
+            try {
+                // Extract video ID
+                const videoIdMatch = normalized.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+                const videoId = videoIdMatch ? videoIdMatch[1] : null;
+
+                if (videoId) {
+                    // Use YouTube oEmbed API (official and reliable)
+                    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+                    const oembedResponse = await fetch(oembedUrl);
+                    
+                    if (oembedResponse.ok) {
+                        const oembedData = await oembedResponse.json();
+                        
+                        const youtubeData = {
+                            url: normalized,
+                            title: oembedData.title || "YouTube Video",
+                            description: `Watch ${oembedData.author_name || 'this video'} on YouTube`,
+                            image: oembedData.thumbnail_url || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+                            site_name: "YouTube",
+                            type: "video",
+                            audio: "",
+                        };
+
+                        console.log(`YouTube data extracted:`, youtubeData);
+
+                        // Insert into database
+                        const { data, error } = await supabase
+                            .from('links')
+                            .insert({
+                                url: normalized,
+                                user_id: user.id,
+                                title: youtubeData.title,
+                                description: youtubeData.description,
+                                image: youtubeData.image,
+                                site_name: youtubeData.site_name,
+                                type: youtubeData.type,
+                                audio: youtubeData.audio
+                            })
+                            .select()
+                            .single();
+
+                        if (error) {
+                            console.error('Database error for YouTube:', error);
+                            return NextResponse.json(
+                                { error: "Database Error" },
+                                { status: 500 }
+                            );
+                        }
+
+                        return NextResponse.json({ data }, { status: 200 });
+                    }
+                }
+            } catch (youtubeError) {
+                console.error('YouTube oEmbed fetch failed, falling back to standard scraping:', youtubeError);
+                // Fall through to standard scraping if oEmbed fails
+            }
+        }
+
         // 1. fetch the webpage HTML with timeout and better error handling
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
