@@ -6,6 +6,67 @@ import { Toggle } from "./ui/toggle";
 import { Spinner } from "./ui/spinner";
 
 /* eslint-disable */
+
+// XSS Protection: URL sanitization utility
+const sanitizeUrl = (url: string | null | undefined): string => {
+  if (!url) return "#";
+  
+  try {
+    const urlStr = url.trim();
+    // Block dangerous URL schemes
+    const dangerousSchemes = ['javascript:', 'data:', 'vbscript:', 'file:', 'about:'];
+    const lowerUrl = urlStr.toLowerCase();
+    
+    if (dangerousSchemes.some(scheme => lowerUrl.startsWith(scheme))) {
+      console.warn('Blocked dangerous URL scheme:', urlStr);
+      return "#";
+    }
+    
+    // Validate URL format
+    const urlObj = new URL(urlStr, window.location.origin);
+    
+    // Only allow http, https, and relative URLs
+    if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+      return urlStr;
+    }
+    
+    return "#";
+  } catch (error) {
+    console.warn('Invalid URL:', url);
+    return "#";
+  }
+};
+
+// XSS Protection: Image URL sanitization
+const sanitizeImageUrl = (url: string | null | undefined): string => {
+  if (!url) return "/image11.png";
+  
+  try {
+    const urlStr = url.trim();
+    // Block dangerous schemes
+    const dangerousSchemes = ['javascript:', 'data:text', 'vbscript:'];
+    const lowerUrl = urlStr.toLowerCase();
+    
+    if (dangerousSchemes.some(scheme => lowerUrl.startsWith(scheme))) {
+      console.warn('Blocked dangerous image URL:', urlStr);
+      return "/image11.png";
+    }
+    
+    // Allow http, https, data:image (for base64 images), and relative URLs
+    if (urlStr.startsWith('http://') || 
+        urlStr.startsWith('https://') || 
+        urlStr.startsWith('/') ||
+        urlStr.startsWith('data:image/')) {
+      return urlStr;
+    }
+    
+    return "/image11.png";
+  } catch (error) {
+    console.warn('Invalid image URL:', url);
+    return "/image11.png";
+  }
+};
+
 export function LinkPreviewCard({
   preview,
   onDelete,
@@ -128,15 +189,20 @@ export function LinkPreviewCard({
       setIsPinning(false)
     }
   };
+
+  // XSS Protection: Sanitize URLs before rendering
+  const safeUrl = sanitizeUrl(preview.url);
+  const safeImageUrl = sanitizeImageUrl(preview.image);
+
   return (
     <div className={`group relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-md ${isListView ? 'flex flex-row' : 'flex flex-col hover:scale-[1.02]'}`}>
       {/* Image Preview */}
       {preview.image && (
-        <Link href={preview.url} rel="noopener noreferrer" target="_blank">
+        <Link href={safeUrl} rel="noopener noreferrer" target="_blank">
           <div className={`relative overflow-hidden bg-muted flex-shrink-0 ${isListView ? 'w-32 h-24 sm:w-48 sm:h-32' : 'h-40 w-full'}`}>
             <img
-              src={preview.image || "/placeholder.png"}
-              alt={preview.title}
+              src={safeImageUrl}
+              alt={preview.title || "Link preview"}
               width={600}
               height={300}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -151,9 +217,9 @@ export function LinkPreviewCard({
       {/* Content Section */}
       <div className={`p-3 sm:p-4 ${isListView ? 'flex-1 flex flex-col justify-between min-w-0' : ''}`}>
         <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <Link href={preview.url} rel="noopener noreferrer" target="_blank" className="flex-1 min-w-0">
+          <Link href={safeUrl} rel="noopener noreferrer" target="_blank" className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2 text-foreground hover:text-primary transition-colors">
-              {preview.title || preview.site_name || new URL(preview.url).hostname}
+              {preview.title || preview.site_name || new URL(safeUrl).hostname}
             </h3>
           </Link>
 
@@ -216,7 +282,7 @@ export function LinkPreviewCard({
           <div className="w-3 h-3 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
           </div>
-          <span className="truncate">{preview.site_name || new URL(preview.url).hostname}</span>
+          <span className="truncate">{preview.site_name || new URL(safeUrl).hostname}</span>
         </div>
 
         {/* Description */}

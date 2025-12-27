@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import { createClient } from "@/utils/supabase/server";
+import { sanitizeMetadata } from "@/lib/sanitize";
 
 export async function POST(request: NextRequest) {
     const supabase = await createClient()
@@ -65,20 +66,23 @@ export async function POST(request: NextRequest) {
                             audio: "",
                         };
 
-                        console.log(`YouTube data extracted:`, youtubeData);
+                        // XSS Protection: Sanitize scraped data before storing
+                        const sanitized = sanitizeMetadata(youtubeData);
+
+                        console.log(`YouTube data extracted:`, sanitized);
 
                         // Insert into database
                         const { data, error } = await supabase
                             .from('links')
                             .insert({
-                                url: normalized,
+                                url: sanitized.url,
                                 user_id: user.id,
-                                title: youtubeData.title,
-                                description: youtubeData.description,
-                                image: youtubeData.image,
-                                site_name: youtubeData.site_name,
-                                type: youtubeData.type,
-                                audio: youtubeData.audio
+                                title: sanitized.title,
+                                description: sanitized.description,
+                                image: sanitized.image,
+                                site_name: sanitized.site_name,
+                                type: sanitized.type,
+                                audio: sanitized.audio
                             })
                             .select()
                             .single();
@@ -222,11 +226,14 @@ export async function POST(request: NextRequest) {
             audio: getMeta("og:audio") || "",
         };
 
+        // XSS Protection: Sanitize scraped data before storing
+        const sanitized = sanitizeMetadata(ogData);
+
         // Log extracted data for debugging in production
         console.log(`Extracted OG data for ${normalized}:`, {
-            title: ogData.title,
-            description: ogData.description?.substring(0, 50),
-            image: ogData.image?.substring(0, 100),
+            title: sanitized.title,
+            description: sanitized.description?.substring(0, 50),
+            image: sanitized.image?.substring(0, 100),
             hasContent: html.length > 0
         });
 
@@ -234,14 +241,14 @@ export async function POST(request: NextRequest) {
         const { data, error } = await supabase
             .from('links')
             .insert({
-                url: normalized,
+                url: sanitized.url,
                 user_id: user.id,
-                title: ogData.title,
-                description: ogData.description,
-                image: ogData.image,
-                site_name: ogData.site_name,
-                type: ogData.type,
-                audio: ogData.audio
+                title: sanitized.title,
+                description: sanitized.description,
+                image: sanitized.image,
+                site_name: sanitized.site_name,
+                type: sanitized.type,
+                audio: sanitized.audio
             })
             .select()
             .single()
