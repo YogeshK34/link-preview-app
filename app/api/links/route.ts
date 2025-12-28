@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import { createClient } from "@/utils/supabase/server";
 import { sanitizeMetadata } from "@/lib/sanitize";
 
+
 export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
 
         // Check if it's a YouTube URL and handle specially
         const isYouTube = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i.test(normalized);
-        
+
         if (isYouTube) {
             console.log(`Detected YouTube URL: ${normalized}`);
             try {
@@ -52,10 +53,10 @@ export async function POST(request: NextRequest) {
                     // Use YouTube oEmbed API (official and reliable)
                     const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
                     const oembedResponse = await fetch(oembedUrl);
-                    
+
                     if (oembedResponse.ok) {
                         const oembedData = await oembedResponse.json();
-                        
+
                         const youtubeData = {
                             url: normalized,
                             title: oembedData.title || "YouTube Video",
@@ -276,7 +277,6 @@ export async function POST(request: NextRequest) {
     };
 }
 
-
 // GET all links for current user
 export async function GET(request: Request) {
     const supabase = await createClient()
@@ -287,14 +287,27 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        const { searchParams } = new URL(request.url)
+        const sort = searchParams.get('sort');
+        const order = searchParams.get('order');
+
+        const allowedSortColumn = ['created_at', 'title'];
+        const allowedOrder = ['asc', 'desc'];
+
+        const sortColumn = sort && allowedSortColumn.includes(sort ?? '')
+            ? sort : 'created_at'
+
+        const sortOrder = allowedOrder.includes(order ?? '')
+            ? order : 'desc'
+
         // Fetch user's links (NO RLS!)
         const { data: links, error } = await supabase
             .from('links')
             .select('*')
             .eq('user_id', user.id)
-            .order('pinned', {ascending: false})
-            .order('pinned_at', {ascending: false, nullsFirst: false})
-            .order('created_at', { ascending: false })
+            .order('pinned', { ascending: false })
+            .order('pinned_at', { ascending: false, nullsFirst: false })
+            .order(sortColumn, { ascending:sortOrder === 'asc' })
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })

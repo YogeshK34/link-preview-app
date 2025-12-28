@@ -21,7 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -58,6 +58,10 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage, setItemsPerPage] = useState<number>(6)
   const [skeletonCount, setSkeletonCount] = useState<number>(3)
+
+  // ============ SORTING STATES ============
+  const [sortBy, setSortBy] = useState<'created_at' | 'title'>('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   // Filter links based on search query
   const filteredLinks = searchQuery.trim()
@@ -199,62 +203,58 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
-  useEffect(() => {
-    if (authLoading) return
-
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/api/links", { method: "GET" })
-
-        if (res.status === 401 && !user) {
-          return
-        }
-
-        if (res.status === 401 && user) {
-          const err = await res.json()
-          toast.error(err.error)
-          return
-        }
-
-        if (!res.ok) {
-          const err = await res.json()
-          toast.error(err.error)
-          return
-        }
-
-        const body = await res.json()
-        setLinks(body.links)
-        // Reset to page 1 when links are loaded
-        setCurrentPage(1)
-
-      } catch (error) {
-        console.error(error)
-        toast.error("Failed to load your links!")
-
-      } finally {
-        setIsLinksLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [authLoading, user])
-
-  const handleRefreshLinks = async () => {
-    if (!user || isRefreshing) return
-
-    setIsRefreshing(true)
+  // Reusable fetch function with sort/order parameters
+  const fetchLinks = async () => {
     try {
-      const res = await fetch("/api/links", { method: "GET" })
+      // Build URL with query parameters
+      const params = new URLSearchParams({
+        sort: sortBy,
+        order: sortOrder
+      })
+      
+      const res = await fetch(`/api/links?${params.toString()}`, { method: "GET" })
+
+      if (res.status === 401 && !user) {
+        return
+      }
+
+      if (res.status === 401 && user) {
+        const err = await res.json()
+        toast.error(err.error)
+        return
+      }
 
       if (!res.ok) {
         const err = await res.json()
-        toast.error(err.error || "Failed to refresh links")
+        toast.error(err.error)
         return
       }
 
       const body = await res.json()
       setLinks(body.links)
+      // Reset to page 1 when links are loaded
       setCurrentPage(1)
+
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to load your links!")
+    } finally {
+      setIsLinksLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (authLoading) return
+    fetchLinks()
+  }, [authLoading, user, sortBy, sortOrder])
+
+  const handleRefreshLinks = async () => {
+    if (!user || isRefreshing) return
+
+    setIsRefreshing(true)
+    setIsLinksLoading(true)
+    try {
+      await fetchLinks()
       toast.success("Links refreshed successfully!")
     } catch (error) {
       console.error(error)
@@ -641,7 +641,7 @@ export default function Home() {
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -660,7 +660,80 @@ export default function Home() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")} className="w-full sm:w-auto">
+                    
+                    {/* Sorting Controls */}
+                    <ToggleGroup 
+                      type="single" 
+                      value={sortBy} 
+                      onValueChange={(value) => value && setSortBy(value as 'created_at' | 'title')} 
+                      variant="outline"
+                      spacing={0}
+                      className="w-full sm:w-auto"
+                    >
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <ToggleGroupItem 
+                              value="created_at" 
+                              aria-label="Sort by date" 
+                              className="flex-1 sm:flex-none"
+                            >
+                              <span className="text-xs sm:text-sm">Date</span>
+                            </ToggleGroupItem>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Sort by creation date</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <ToggleGroupItem 
+                              value="title" 
+                              aria-label="Sort by title" 
+                              className="flex-1 sm:flex-none"
+                            >
+                              <span className="text-xs sm:text-sm">Title</span>
+                            </ToggleGroupItem>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Sort by title</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </ToggleGroup>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                            className="shrink-0"
+                          >
+                            {sortOrder === 'asc' ? (
+                              <ArrowUp className="h-4 w-4" />
+                            ) : (
+                              <ArrowDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <ToggleGroup 
+                      type="single" 
+                      value={viewMode} 
+                      onValueChange={(value) => value && setViewMode(value as "grid" | "list")} 
+                      variant="outline"
+                      spacing={0}
+                      className="w-full sm:w-auto"
+                    >
                       <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
                         <LayoutGrid className="h-4 w-4 sm:mr-0" />
                         <span className="ml-2 sm:hidden">Grid</span>
