@@ -505,10 +505,10 @@ export default function Home() {
                           </TooltipTrigger>
                           <TooltipContent>
                             <span>
-                            {authLoading ? 
-                            "Checking Authentication" 
-                          :
-                          "Please sign in to submit links"}
+                              {authLoading ?
+                                "Checking Authentication"
+                                :
+                                "Please sign in to submit links"}
                             </span>
                           </TooltipContent>
                         </Tooltip>
@@ -542,7 +542,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  {!user || authLoading ? (
+                  {!user ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-full">
@@ -550,17 +550,27 @@ export default function Home() {
                             variant="outline"
                             className="w-full h-10 cursor-not-allowed pointer-events-none"
                             disabled
-                          >🚫 Sign in to submit</Button>
+                          >
+                            {authLoading ?
+                              (
+                                <div className="flex items-center gap-2">
+                                  <Spinner className="h-4 w-4" />
+                                  <span>Loading...</span>
+                                </div>
+                              ) : (
+                                "🚫 Sign in to submit"
+                              )}
+                          </Button>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                            <span>
-                            {authLoading ? 
-                            "Checking Authentication" 
-                          :
-                          "Please sign in to submit links"}
-                            </span>
-                          </TooltipContent>
+                        <span>
+                          {authLoading ?
+                            "Checking Authentication"
+                            :
+                            "Please sign in to submit links"}
+                        </span>
+                      </TooltipContent>
                     </Tooltip>
                   ) : (
                     <Button
