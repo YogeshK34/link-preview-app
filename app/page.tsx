@@ -489,17 +489,41 @@ export default function Home() {
                         </TooltipProvider>
                         <span>https://</span>
                       </InputGroupAddon>
-                      <InputGroupInput
-                        id="input-secure-19"
-                        type="text"
-                        ref={inputRef}
-                        placeholder="github.com"
-                        required
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={!user}
-                        autoComplete="off"
-                      />
+                      {!user || authLoading ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-full">
+                              <InputGroupInput
+                                id="input-secure-19"
+                                type="text"
+                                placeholder="github.com"
+                                disabled
+                                autoComplete="off"
+                                className="pointer-events-none"
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <span>
+                            {authLoading ? 
+                            "Checking Authentication" 
+                          :
+                          "Please sign in to submit links"}
+                            </span>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <InputGroupInput
+                          id="input-secure-19"
+                          type="text"
+                          ref={inputRef}
+                          placeholder="github.com"
+                          required
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          autoComplete="off"
+                        />
+                      )}
                     </InputGroup>
                   </div>
 
@@ -518,28 +542,44 @@ export default function Home() {
                     </div>
                   )}
 
-                  <Button
-                    variant="default"
-                    type="submit"
-                    className="w-full h-10 font-medium"
-                    disabled={loading || !user || authLoading}
-                  >
-                    {authLoading ? (
-                      <div className="flex items-center gap-2">
-                        <Spinner className="h-4 w-4" />
-                        <span>Loading...</span>
-                      </div>
-                    ) : loading ? (
-                      <div className="flex items-center gap-2">
-                        <Spinner className="h-4 w-4" />
-                        <span>Submitting...</span>
-                      </div>
-                    ) : !user ? (
-                      "Sign in to Submit"
-                    ) : (
-                      "Submit"
-                    )}
-                  </Button>
+                  {!user || authLoading ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-full">
+                          <Button
+                            variant="outline"
+                            className="w-full h-10 cursor-not-allowed pointer-events-none"
+                            disabled
+                          >🚫 Sign in to submit</Button>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                            <span>
+                            {authLoading ? 
+                            "Checking Authentication" 
+                          :
+                          "Please sign in to submit links"}
+                            </span>
+                          </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Button
+                      variant="default"
+                      type="submit"
+                      className="w-full h-10 font-medium"
+
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <div className="flex items-center gap-2">
+                          <Spinner className="h-4 w-4" />
+                          <span>Submitting...</span>
+                        </div>
+                      ) : (
+                        "Submit"
+                      )}
+                    </Button>
+                  )}
                 </div>
               </form>
             </CardContent>
