@@ -21,7 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -33,6 +33,8 @@ import { LinkPreviewCard } from "@/components/link-preview-card"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Command, CommandInput } from "@/components/ui/command"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
+import { cn } from "@/lib/utils"
+// import { cn } from "@/lib/utils"
 
 // creating outside to prevent multiple client creations
 const supabase = createClient()
@@ -211,7 +213,7 @@ export default function Home() {
         sort: sortBy,
         order: sortOrder
       })
-      
+
       const res = await fetch(`/api/links?${params.toString()}`, { method: "GET" })
 
       if (res.status === 401 && !user) {
@@ -641,7 +643,7 @@ export default function Home() {
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+                  <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -660,49 +662,53 @@ export default function Home() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    
+
                     {/* Sorting Controls */}
-                    <ToggleGroup 
-                      type="single" 
-                      value={sortBy} 
-                      onValueChange={(value) => value && setSortBy(value as 'created_at' | 'title')} 
-                      variant="outline"
-                      spacing={0}
-                      className="w-full sm:w-auto"
-                    >
-                      <TooltipProvider>
+                    <TooltipProvider>
+                      <ToggleGroup
+                        type="single"
+                        value={sortBy}
+                        onValueChange={(value) => value && setSortBy(value as 'created_at' | 'title')}
+                        variant="outline"
+                        spacing={0}
+                      >
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <ToggleGroupItem 
-                              value="created_at" 
-                              aria-label="Sort by date" 
-                              className="flex-1 sm:flex-none"
+                            <ToggleGroupItem
+                              value="created_at"
+                              aria-label="Sort by date"
+                              className={cn(
+                                sortBy === 'created_at' && "bg-secondary text-secondary-foreground"
+                              )}
                             >
-                              <span className="text-xs sm:text-sm">Date</span>
+                              <Calendar className="h-4 w-4" />
+                              <span className="ml-2 hidden md:inline">Date</span>
                             </ToggleGroupItem>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Sort by creation date</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
+
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <ToggleGroupItem 
-                              value="title" 
-                              aria-label="Sort by title" 
-                              className="flex-1 sm:flex-none"
+                            <ToggleGroupItem
+                              value="title"
+                              aria-label="Sort by title"
+                              className={cn(
+                                sortBy === 'title' && "bg-secondary text-secondary-foreground"
+                              )}
                             >
-                              <span className="text-xs sm:text-sm">Title</span>
+                              <Type className="h-4 w-4" />
+                              <span className="ml-2 hidden md:inline">Title</span>
                             </ToggleGroupItem>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Sort by title</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
-                    </ToggleGroup>
+                      </ToggleGroup>
+                    </TooltipProvider>
 
                     <TooltipProvider>
                       <Tooltip>
@@ -726,23 +732,65 @@ export default function Home() {
                       </Tooltip>
                     </TooltipProvider>
 
-                    <ToggleGroup 
-                      type="single" 
-                      value={viewMode} 
-                      onValueChange={(value) => value && setViewMode(value as "grid" | "list")} 
-                      variant="outline"
-                      spacing={0}
-                      className="w-full sm:w-auto"
-                    >
-                      <ToggleGroupItem value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
-                        <LayoutGrid className="h-4 w-4 sm:mr-0" />
-                        <span className="ml-2 sm:hidden">Grid</span>
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="list" aria-label="List view" className="flex-1 sm:flex-none">
-                        <List className="h-4 w-4 sm:mr-0" />
-                        <span className="ml-2 sm:hidden">List</span>
-                      </ToggleGroupItem>
-                    </ToggleGroup>
+                    {/* List & Grid view */}
+                    <TooltipProvider>
+                      <ToggleGroup
+                        type="single"
+                        value={viewMode}
+                        onValueChange={(value) => value && setViewMode(value as "grid" | "list")}
+                        variant="outline"
+                        spacing={0}
+                      >
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <ToggleGroupItem value="grid" aria-label="Grid view">
+                              <LayoutGrid className="h-4 w-4" />
+                              <span className="ml-2 hidden md:inline">Grid</span>
+                            </ToggleGroupItem>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Grid view</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <ToggleGroupItem value="list" aria-label="List view">
+                              <List className="h-4 w-4" />
+                              <span className="ml-2 hidden md:inline">List</span>
+                            </ToggleGroupItem>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>List view</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </ToggleGroup>
+                    </TooltipProvider>
+                          
+                    {(sortBy !== 'created_at' || sortOrder !== 'desc' || viewMode !== 'grid') && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              onClick={() => {
+                                setViewMode('grid');
+                                setSortBy('created_at');
+                                setSortOrder('desc');
+                              }}
+                              variant="outline"
+                              size="icon"
+                              className="shrink-0"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Reset filters</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}     
+                    
                     {!isOpen && (
                       <TooltipProvider>
                         <Tooltip>
