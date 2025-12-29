@@ -743,7 +743,13 @@ export default function Home() {
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <ToggleGroupItem value="grid" aria-label="Grid view">
+                            <ToggleGroupItem 
+                              value="grid" 
+                              aria-label="Grid view"
+                              className={cn(
+                                viewMode === 'grid' && "bg-secondary text-secondary-foreground"
+                              )}
+                              >
                               <LayoutGrid className="h-4 w-4" />
                               <span className="ml-2 hidden md:inline">Grid</span>
                             </ToggleGroupItem>
@@ -755,7 +761,13 @@ export default function Home() {
 
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <ToggleGroupItem value="list" aria-label="List view">
+                            <ToggleGroupItem 
+                              value="list" 
+                              aria-label="List view"
+                              className={cn(
+                                viewMode === 'list' && "bg-secondary text-secondary-foreground"
+                              )}
+                              >
                               <List className="h-4 w-4" />
                               <span className="ml-2 hidden md:inline">List</span>
                             </ToggleGroupItem>
