@@ -21,7 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Music2, CodeIcon, PenIcon, Newspaper } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -34,6 +34,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/in
 import { Command, CommandInput } from "@/components/ui/command"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { cn } from "@/lib/utils"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { IconBrandYoutube } from "@tabler/icons-react"
 // import { cn } from "@/lib/utils"
 
 // creating outside to prevent multiple client creations
@@ -663,6 +665,54 @@ export default function Home() {
                       </Tooltip>
                     </TooltipProvider>
 
+                    {/** Categories Section **/}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button>
+                          <Layers />
+                          Categories
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        {/** here I'll display all categories or give user options to create a new category */}
+                        <div className="px-12 items-center">
+                        <Button>
+                          <Plus />
+                          Create a category
+                        </Button>
+                        </div>
+                        <div className="py-10">
+                        <Separator/>
+                        </div>
+                        <div className="flex justify-center space-between px-8">
+                        <Button>
+                          <Music2/>
+                          Spotify
+                        </Button>
+
+                        <Button>
+                          <IconBrandYoutube/>
+                          Youtube
+                        </Button>
+
+                        <Button>
+                          <CodeIcon/>
+                          Tech
+                        </Button>
+
+                        <Button>
+                          <PenIcon/>
+                          Blog
+                        </Button>
+
+                        <Button>
+                          <Newspaper/>
+                          News
+                        </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
                     {/* Sorting Controls */}
                     <TooltipProvider>
                       <ToggleGroup
@@ -743,13 +793,13 @@ export default function Home() {
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <ToggleGroupItem 
-                              value="grid" 
+                            <ToggleGroupItem
+                              value="grid"
                               aria-label="Grid view"
                               className={cn(
                                 viewMode === 'grid' && "bg-secondary text-secondary-foreground"
                               )}
-                              >
+                            >
                               <LayoutGrid className="h-4 w-4" />
                               <span className="ml-2 hidden md:inline">Grid</span>
                             </ToggleGroupItem>
@@ -761,13 +811,13 @@ export default function Home() {
 
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <ToggleGroupItem 
-                              value="list" 
+                            <ToggleGroupItem
+                              value="list"
                               aria-label="List view"
                               className={cn(
                                 viewMode === 'list' && "bg-secondary text-secondary-foreground"
                               )}
-                              >
+                            >
                               <List className="h-4 w-4" />
                               <span className="ml-2 hidden md:inline">List</span>
                             </ToggleGroupItem>
@@ -778,7 +828,7 @@ export default function Home() {
                         </Tooltip>
                       </ToggleGroup>
                     </TooltipProvider>
-                          
+
                     {(sortBy !== 'created_at' || sortOrder !== 'desc' || viewMode !== 'grid') && (
                       <TooltipProvider>
                         <Tooltip>
@@ -801,8 +851,8 @@ export default function Home() {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                    )}     
-                    
+                    )}
+
                     {!isOpen && (
                       <TooltipProvider>
                         <Tooltip>
