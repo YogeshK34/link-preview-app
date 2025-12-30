@@ -21,7 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check} from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -70,7 +70,7 @@ export default function Home() {
   // ============ PAGINATION STATES ============
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage, setItemsPerPage] = useState<number>(6)
-  const [skeletonCount, setSkeletonCount] = useState<number>(3)
+  const [skeletonCount, setSkeletonCount] = useState<number>(6)
 
   // ============ SORTING STATES ============
   const [sortBy, setSortBy] = useState<'created_at' | 'title'>('created_at')
@@ -158,7 +158,7 @@ export default function Home() {
       } else {
         // Desktop: 3 columns
         setItemsPerPage(6)
-        setSkeletonCount(3)
+        setSkeletonCount(6)
       }
     }
 
@@ -740,26 +740,47 @@ export default function Home() {
           ) : null}
 
           {linksLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
-              {Array.from({ length: skeletonCount }).map((_, i) => (
-                <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
-                  <Skeleton className="w-full h-40" />
-                  <div className="flex-1 flex flex-col p-3 sm:p-4 gap-3">
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Skeleton className="w-4 h-4 rounded-full" />
-                      <Skeleton className="h-3 w-24" />
-                    </div>
-                    <div className="space-y-2 mt-1">
-                      <Skeleton className="h-3 w-full" />
-                      <Skeleton className="h-3 w-5/6" />
-                    </div>
+            <div className="w-full">
+              {/* Toolbar Skeleton */}
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <Skeleton className="h-6 w-40 mb-2" />
+                    <Skeleton className="h-4 w-56" />
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                    <Skeleton className="h-10 w-10 shrink-0 rounded-md border" />
+                    <Skeleton className="h-10 w-24 sm:w-32 shrink-0 rounded-md border" />
+                    <Skeleton className="h-10 w-32 sm:w-40 shrink-0 rounded-md border" />
+                    <Skeleton className="h-10 w-10 shrink-0 rounded-md border" />
+                    <Skeleton className="h-10 w-32 sm:w-40 shrink-0 rounded-md border" />
+                    <Skeleton className="h-10 w-24 sm:w-32 shrink-0 rounded-md border" />
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Links Grid Skeleton */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
+                {Array.from({ length: skeletonCount }).map((_, i) => (
+                  <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
+                    <Skeleton className="w-full h-40" />
+                    <div className="flex-1 flex flex-col p-3 sm:p-4 gap-3">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Skeleton className="w-4 h-4 rounded-full" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                      <div className="space-y-2 mt-1">
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-5/6" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
           ) : links.length > 0 ? (
