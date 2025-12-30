@@ -942,7 +942,7 @@ export default function Home() {
                                                   </AlertDialogHeader>
                                                   <AlertDialogFooter className="gap-2 sm:gap-2">
                                                     <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => deleteCategory(cat.id)} className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                                    <AlertDialogAction onClick={() => deleteCategory(cat.id)}>
                                                       Delete
                                                     </AlertDialogAction>
                                                   </AlertDialogFooter>

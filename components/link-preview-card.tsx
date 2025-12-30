@@ -13,26 +13,26 @@ import { Button } from "./ui/button";
 // XSS Protection: URL sanitization utility
 const sanitizeUrl = (url: string | null | undefined): string => {
   if (!url) return "#";
-  
+
   try {
     const urlStr = url.trim();
     // Block dangerous URL schemes
     const dangerousSchemes = ['javascript:', 'data:', 'vbscript:', 'file:', 'about:'];
     const lowerUrl = urlStr.toLowerCase();
-    
+
     if (dangerousSchemes.some(scheme => lowerUrl.startsWith(scheme))) {
       console.warn('Blocked dangerous URL scheme:', urlStr);
       return "#";
     }
-    
+
     // Validate URL format
     const urlObj = new URL(urlStr, window.location.origin);
-    
+
     // Only allow http, https, and relative URLs
     if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
       return urlStr;
     }
-    
+
     return "#";
   } catch (error) {
     console.warn('Invalid URL:', url);
@@ -43,26 +43,26 @@ const sanitizeUrl = (url: string | null | undefined): string => {
 // XSS Protection: Image URL sanitization
 const sanitizeImageUrl = (url: string | null | undefined): string => {
   if (!url) return "/image11.png";
-  
+
   try {
     const urlStr = url.trim();
     // Block dangerous schemes
     const dangerousSchemes = ['javascript:', 'data:text', 'vbscript:'];
     const lowerUrl = urlStr.toLowerCase();
-    
+
     if (dangerousSchemes.some(scheme => lowerUrl.startsWith(scheme))) {
       console.warn('Blocked dangerous image URL:', urlStr);
       return "/image11.png";
     }
-    
+
     // Allow http, https, data:image (for base64 images), and relative URLs
-    if (urlStr.startsWith('http://') || 
-        urlStr.startsWith('https://') || 
-        urlStr.startsWith('/') ||
-        urlStr.startsWith('data:image/')) {
+    if (urlStr.startsWith('http://') ||
+      urlStr.startsWith('https://') ||
+      urlStr.startsWith('/') ||
+      urlStr.startsWith('data:image/')) {
       return urlStr;
     }
-    
+
     return "/image11.png";
   } catch (error) {
     console.warn('Invalid image URL:', url);
@@ -228,37 +228,57 @@ export function LinkPreviewCard({
 
           <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
             {/* Copy button */}
-            <Toggle
-              onClick={copyLink}
-              size="sm"
-              variant="outline"
-              className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
-              title={isCopied ? "Copied!" : "Copy link"}
-            >
-              {isCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-            </Toggle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  onClick={copyLink}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
+                  title={isCopied ? "Copied!" : "Copy link"}
+                >
+                  {isCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent>Copy this link</TooltipContent>
+            </Tooltip>
 
             {/* Share button */}
-            <Toggle onClick={shareLink} size="sm" variant="outline" className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2" title="Share link">
-              <Share2 className="w-4 h-4" />
-            </Toggle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle onClick={shareLink} size="sm" variant="outline" className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2" title="Share link">
+                  <Share2 className="w-4 h-4" />
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent>Share this link</TooltipContent>
+            </Tooltip>
 
             {/* Pin button */}
-            <Toggle
-              onClick={pinLinks}
-              disabled={isPinning}
-              pressed={isPinned}
-              size="sm"
-              variant="outline"
-              className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
-              title={isPinned ? "Unpin link" : "Pin link"}
-            >
-              {isPinning ? (
-                <Spinner className="w-4 h-4" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  onClick={pinLinks}
+                  disabled={isPinning}
+                  pressed={isPinned}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
+                // title={isPinned ? "Unpin link" : "Pin link"}
+                >
+                  {isPinning ? (
+                    <Spinner className="w-4 h-4" />
+                  ) : (
+                    <Pin className={`w-4 h-4 ${isPinned ? 'fill-current text-primary' : ''}`} />
+                  )}
+                </Toggle>
+              </TooltipTrigger>
+              {isPinned ? (
+                <TooltipContent>Unpin Link</TooltipContent>
               ) : (
-                <Pin className={`w-4 h-4 ${isPinned ? 'fill-current text-primary' : ''}`} />
+                <TooltipContent>Pin this link</TooltipContent>
               )}
-            </Toggle>
+
+            </Tooltip>
 
             {/* Delete button */}
             {onDelete && linkId && (
@@ -290,7 +310,7 @@ export function LinkPreviewCard({
                       </AlertDialogHeader>
                       <AlertDialogFooter className="gap-2 sm:gap-2">
                         <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteClick} className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction onClick={handleDeleteClick}>
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>
