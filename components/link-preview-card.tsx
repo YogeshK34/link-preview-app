@@ -4,6 +4,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Toggle } from "./ui/toggle";
 import { Spinner } from "./ui/spinner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Button } from "./ui/button";
 
 /* eslint-disable */
 
@@ -259,20 +262,45 @@ export function LinkPreviewCard({
 
             {/* Delete button */}
             {onDelete && linkId && (
-              <Toggle
-                onClick={handleDeleteClick}
-                disabled={isDeleting}
-                size="sm"
-                variant="outline"
-                className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2 hover:bg-destructive/10 hover:text-destructive"
-                title="Delete link"
-              >
-                {isDeleting ? (
-                  <Spinner className="w-4 h-4" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-              </Toggle>
+              <TooltipProvider>
+                <Tooltip>
+                  <AlertDialog>
+                    <TooltipTrigger asChild>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isDeleting}
+                          className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2 hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          {isDeleting ? (
+                            <Spinner className="w-4 h-4" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-base sm:text-lg">Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-sm">
+                          This action cannot be undone. This will permanently delete this link from your collection.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="gap-2 sm:gap-2">
+                        <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteClick} className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <TooltipContent>
+                    <p>Delete link</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>

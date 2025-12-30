@@ -21,7 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Music2, CodeIcon, PenIcon, Newspaper } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check} from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -35,8 +35,8 @@ import { Command, CommandInput } from "@/components/ui/command"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { IconBrandYoutube } from "@tabler/icons-react"
-// import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 // creating outside to prevent multiple client creations
 const supabase = createClient()
@@ -54,9 +54,18 @@ export default function Home() {
   const [linksLoading, setIsLinksLoading] = useState<boolean>(true)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  const [isRefreshingCategories, setIsRefreshingCategories] = useState<boolean>(false)
+  const [categoriesLoading, setIsCategoriesLoading] = useState<boolean>(true)
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState<string>("")
   const router = useRouter()
+
+  type Category = {
+    id: string;
+    name: string;
+    isDefault: boolean;
+    readOnly: boolean;
+  };
 
   // ============ PAGINATION STATES ============
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -66,6 +75,12 @@ export default function Home() {
   // ============ SORTING STATES ============
   const [sortBy, setSortBy] = useState<'created_at' | 'title'>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
+  // ============ CATEGORY STATES ============
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [name, setName] = useState<string>("");
+  const [editCategoryName, setEditCategoryName] = useState<string>("");
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
 
   // Filter links based on search query
   const filteredLinks = searchQuery.trim()
@@ -249,7 +264,10 @@ export default function Home() {
 
   useEffect(() => {
     if (authLoading) return
-    fetchLinks()
+    if (user) {
+      fetchLinks()
+      fetchCategories()
+    }
   }, [authLoading, user, sortBy, sortOrder])
 
   const handleRefreshLinks = async () => {
@@ -267,6 +285,23 @@ export default function Home() {
       setIsRefreshing(false)
     }
   }
+
+  const handleRefreshCategories = async () => {
+    if (!user || isRefreshingCategories) return
+
+    setIsRefreshingCategories(true)
+    try {
+      await fetchCategories()
+      toast.success("Categories refreshed successfully!")
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to refresh categories!")
+    } finally {
+      setIsRefreshingCategories(false)
+    }
+  }
+
+
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -412,6 +447,102 @@ export default function Home() {
       })
     })
   }
+
+  // categories functions
+  const fetchCategories = async () => {
+    try {
+      setIsCategoriesLoading(true);
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Failed to fetch categories");
+        return;
+      }
+
+      setCategories(data);
+    } catch (error) {
+      toast.error("Something went wrong");
+    } finally {
+      setIsCategoriesLoading(false);
+    }
+  };
+
+  const createCategories = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      return toast.error("Name cannot be empty!");
+    };
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error);
+      };
+
+      toast.success("Category created!");
+      setName("");
+      fetchCategories();
+
+    } catch (error: any) {
+      toast.error(error);
+    }
+  }
+
+  const updateCategory = async (id: string) => {
+    if (!editCategoryName.trim()) {
+      return toast.error("Name cannot be empty!")
+    }
+
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editCategoryName })
+      })
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error);
+      };
+
+      toast.success("Categoy name updated successfully!");
+      setEditingCategoryId(null);
+      fetchCategories();
+
+    } catch (error: any) {
+      return toast.error(error)
+    };
+  };
+
+  const deleteCategory = async (id: string) => {
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return toast.error(data.error);
+      };
+
+      toast.success("Category deleted successfully!");
+      fetchCategories();
+    } catch (error: any) {
+      return toast.error(error)
+    };
+  }
+
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background px-4 py-8">
@@ -666,49 +797,178 @@ export default function Home() {
                     </TooltipProvider>
 
                     {/** Categories Section **/}
-                    <Popover>
+                    <Popover onOpenChange={(open) => open && fetchCategories()}>
                       <PopoverTrigger asChild>
-                        <Button>
-                          <Layers />
-                          Categories
+                        <Button variant="outline" className="gap-2">
+                          <Layers className="h-4 w-4" />
+                          <span className="hidden sm:inline">Categories</span>
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent>
-                        {/** here I'll display all categories or give user options to create a new category */}
-                        <div className="px-12 items-center">
-                        <Button>
-                          <Plus />
-                          Create a category
-                        </Button>
-                        </div>
-                        <div className="py-10">
-                        <Separator/>
-                        </div>
-                        <div className="flex justify-center space-between px-8">
-                        <Button>
-                          <Music2/>
-                          Spotify
-                        </Button>
+                      <PopoverContent className="w-80 sm:w-96" align="end">
+                        <div className="flex flex-col gap-4">
+                          {/* Header */}
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-sm">Manage Categories</h3>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={handleRefreshCategories}
+                              disabled={isRefreshingCategories}
+                            >
+                              <RefreshCw className={`h-4 w-4 ${isRefreshingCategories ? 'animate-spin' : ''}`} />
+                            </Button>
+                          </div>
 
-                        <Button>
-                          <IconBrandYoutube/>
-                          Youtube
-                        </Button>
+                          <Separator className="-mx-3 w-[calc(100%+1.5rem)]" />
 
-                        <Button>
-                          <CodeIcon/>
-                          Tech
-                        </Button>
+                          {/* Categories List */}
+                          {categoriesLoading ? (
+                            <div className="flex flex-col gap-2">
+                              {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="flex items-center gap-2 p-2 rounded-md border">
+                                  <Skeleton className="h-4 flex-1" />
+                                  <Skeleton className="h-8 w-8 shrink-0" />
+                                  <Skeleton className="h-8 w-8 shrink-0" />
+                                </div>
+                              ))}
+                            </div>
+                          ) : categories.length > 0 ? (
+                            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                              {categories.map((cat) => (
+                                <div
+                                  key={cat.id}
+                                  className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors"
+                                >
+                                  {editingCategoryId === cat.id ? (
+                                    <>
+                                      <Input
+                                        type="text"
+                                        placeholder="Category name"
+                                        value={editCategoryName}
+                                        onChange={(e) => setEditCategoryName(e.target.value)}
+                                        className="h-8 flex-1"
+                                        autoFocus
+                                        autoComplete='off'
+                                      />
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8 shrink-0"
+                                        onClick={() => updateCategory(cat.id)}
+                                      >
+                                        <Check className="h-4 w-4 text-green-600" />
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8 shrink-0"
+                                        onClick={() => setEditingCategoryId(null)}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="flex-1 text-sm font-medium truncate">
+                                        {cat.name}
+                                        {cat.readOnly && (
+                                          <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
+                                        )}
+                                      </span>
+                                      {!cat.readOnly && (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  className="h-8 w-8"
+                                                  onClick={() => {
+                                                    setEditingCategoryId(cat.id)
+                                                    setEditCategoryName(cat.name)
+                                                  }}
+                                                >
+                                                  <Pencil className="h-3.5 w-3.5" />
+                                                </Button>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>Edit category</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <AlertDialog>
+                                                <TooltipTrigger asChild>
+                                                  <AlertDialogTrigger asChild>
+                                                    <Button
+                                                      size="icon"
+                                                      variant="ghost"
+                                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                                    >
+                                                      <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                  </AlertDialogTrigger>
+                                                </TooltipTrigger>
+                                                <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
+                                                  <AlertDialogHeader>
+                                                    <AlertDialogTitle className="text-base sm:text-lg">Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription className="text-sm">
+                                                      This action cannot be undone. This will permanently delete the category "{cat.name}" from your account.
+                                                    </AlertDialogDescription>
+                                                  </AlertDialogHeader>
+                                                  <AlertDialogFooter className="gap-2 sm:gap-2">
+                                                    <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => deleteCategory(cat.id)} className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                                      Delete
+                                                    </AlertDialogAction>
+                                                  </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                              </AlertDialog>
+                                              <TooltipContent>
+                                                <p>Delete category</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-6 text-sm text-muted-foreground">
+                              No categories yet
+                            </div>
+                          )}
 
-                        <Button>
-                          <PenIcon/>
-                          Blog
-                        </Button>
+                          <Separator className="-mx-3 w-[calc(100%+1.5rem)]" />
 
-                        <Button>
-                          <Newspaper/>
-                          News
-                        </Button>
+                          {/* Create New Category */}
+                          <form onSubmit={createCategories} className="flex flex-col gap-3">
+                            <Label htmlFor="new-category" className="text-xs font-medium text-muted-foreground">
+                              Create New Category
+                            </Label>
+                            <div className="flex gap-2">
+                              <Input
+                                id="new-category"
+                                type="text"
+                                placeholder="Enter category name"
+                                value={name}
+                                required
+                                onChange={(e) => setName(e.target.value)}
+                                className="h-9 flex-1"
+                                autoComplete='off'
+                              />
+                              <Button type="submit" size="sm" className="h-9 gap-1.5 shrink-0">
+                                <Plus className="h-4 w-4" />
+                                Add
+                              </Button>
+                            </div>
+                          </form>
                         </div>
                       </PopoverContent>
                     </Popover>
