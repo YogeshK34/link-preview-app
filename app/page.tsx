@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -739,7 +738,7 @@ export default function Home() {
             </div>
           ) : null}
 
-          {linksLoading ? (
+          {linksLoading && user ? (
             <div className="w-full">
               {/* Toolbar Skeleton */}
               <div className="flex flex-col gap-3 mb-4">
