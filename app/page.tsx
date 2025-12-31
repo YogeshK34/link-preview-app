@@ -898,6 +898,8 @@ export default function Home() {
                                       </span>
                                       {!cat.readOnly && (
                                         <div className="flex items-center gap-1 shrink-0">
+
+                                          {/* Edit Category*/}
                                           <TooltipProvider>
                                             <Tooltip>
                                               <TooltipTrigger asChild>
@@ -918,6 +920,8 @@ export default function Home() {
                                               </TooltipContent>
                                             </Tooltip>
                                           </TooltipProvider>
+
+                                          {/*Delete Category */}
                                           <TooltipProvider>
                                             <Tooltip>
                                               <AlertDialog>

@@ -95,20 +95,19 @@ export function LinkPreviewCard({
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState<boolean>(false);
   const [updatingCategoryId, setUpdatingCategoryId] = useState<string | null>(null);
 
-  // Extract the categories that are already linked to this link
-  const linkCategories = preview.link_categories?.map((lc: any) => lc.categories).filter(Boolean) || [];
-
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   type Category = {
     id: string;
     name: string;
     isDefault: boolean;
     readOnly: boolean;
   };
+
+  // Extract the categories that are already linked to this link
+  // Filter to only show categories that still exist in the categories list (in case a category was deleted)
+  const linkCategories = preview.link_categories
+    ?.map((lc: any) => lc.categories)
+    .filter(Boolean)
+    .filter((cat: any) => categories.some(c => c.id === cat.id)) || [];
 
   // link-categories functions 
   const addLinkCategory = async (linkId: string, categoryId: string) => {
@@ -176,7 +175,7 @@ export function LinkPreviewCard({
         return toast.error(data.error);
       };
 
-      toast.success("Successfully removed link from category!");
+      toast.success("Added category to link!");
 
       // Update the local state to reflect the change
       // Remove the category from linkCategories
@@ -208,6 +207,10 @@ export function LinkPreviewCard({
       setIsCategoriesLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []); // Only run once on mount
 
   // wrap the onDelete inside a helper function 
   const handleDeleteClick = async () => {
@@ -365,7 +368,10 @@ export function LinkPreviewCard({
             </Tooltip>
 
             {/* Link Categories Section*/}
-            <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
+            <Popover open={isCategoryPopoverOpen} onOpenChange={(open) => {
+              setIsCategoryPopoverOpen(open);
+              if (open) fetchCategories(); // Refresh when opening
+            }}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <PopoverTrigger asChild>
@@ -391,7 +397,7 @@ export function LinkPreviewCard({
                   </PopoverTrigger>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {linkCategories.length > 0 ? 'Manage categories' : 'Add to category'}
+                  {linkCategories.length > 0 ? 'Manage categories' : 'Add to a category'}
                 </TooltipContent>
               </Tooltip>
               <PopoverContent className="w-80 sm:w-96" align="start">
@@ -418,41 +424,61 @@ export function LinkPreviewCard({
                       No categories available
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                      {categories.map((category) => {
-                        // Check if this category is already added to this link
-                        const isAlreadyAdded = linkCategories.some((lc: any) => lc.id === category.id);
-                        const isUpdating = updatingCategoryId === category.id;
+                    <>
+                      {/* Show linked categories at the top if any exist */}
+                      {linkCategories.length > 0 && (
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            {linkCategories.map((cat: any) => (
+                              <span 
+                                key={cat.id}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary border border-primary/20"
+                              >
+                                {cat.name}
+                              </span>
+                            ))}
+                          </div>
+                          <Separator className="-mx-3 w-[calc(100%+1.5rem)]" />
+                        </>
+                      )}
 
-                        return (
-                          <button
-                            key={category.id}
-                            className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={isUpdating}
-                            onClick={() => {
-                              if (isAlreadyAdded) {
-                                deleteLinkCategory(linkId!, category.id);
-                              } else {
-                                handleCategorySelect(category.id);
-                              }
-                            }}
-                          >
-                            <span className="flex-1 text-sm font-medium text-left truncate">
-                              {category.name}
-                            </span>
-                            <div className="shrink-0">
-                              {isUpdating ? (
-                                <Spinner className="w-4 h-4" />
-                              ) : isAlreadyAdded ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <></>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                      {/* Show all categories for selection */}
+                      <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                        {categories.map((category) => {
+                          const isAlreadyAdded = linkCategories.some((lc: any) => lc.id === category.id);
+                          const isUpdating = updatingCategoryId === category.id;
+
+                          return (
+                            <Button
+                              key={category.id}
+                              variant="outline"
+                              className="flex items-center gap-2 h-auto p-2 justify-start font-normal hover:bg-accent/50"
+                              disabled={isUpdating}
+                              onClick={() => {
+                                if (isAlreadyAdded) {
+                                  deleteLinkCategory(linkId!, category.id);
+                                } else {
+                                  handleCategorySelect(category.id);
+                                }
+                              }}
+                            >
+                              <span className="flex-1 text-sm font-medium text-left truncate">
+                                {category.name}
+                              </span>
+                              <div className="shrink-0">
+                                {isUpdating ? (
+                                  <Spinner className="w-4 h-4" />
+                                ) : isAlreadyAdded ? (
+                                  <Check className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <></>
+                                )}
+                              </div>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               </PopoverContent>
