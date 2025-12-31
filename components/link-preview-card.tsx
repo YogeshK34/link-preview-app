@@ -1,12 +1,15 @@
-import { Check, Copy, ExternalLink, Pin, Share2, Trash2 } from "lucide-react";
+import { Check, Copy, ExternalLink, Layers, Pin, Plus, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Toggle } from "./ui/toggle";
 import { Spinner } from "./ui/spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Button } from "./ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Separator } from "./ui/separator";
+import { Skeleton } from "./ui/skeleton";
 
 /* eslint-disable */
 
@@ -87,6 +90,124 @@ export function LinkPreviewCard({
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const [isPinning, setIsPinning] = useState<boolean>(false)
   const [isPinned, setIsPinned] = useState<boolean>(preview.pinned || false)
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState<boolean>(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState<boolean>(false);
+  const [updatingCategoryId, setUpdatingCategoryId] = useState<string | null>(null);
+
+  // Extract the categories that are already linked to this link
+  const linkCategories = preview.link_categories?.map((lc: any) => lc.categories).filter(Boolean) || [];
+
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  type Category = {
+    id: string;
+    name: string;
+    isDefault: boolean;
+    readOnly: boolean;
+  };
+
+  // link-categories functions 
+  const addLinkCategory = async (linkId: string, categoryId: string) => {
+    if (!linkId || !categoryId) {
+      return toast.error("Link & Categories are required!");
+    };
+
+    setUpdatingCategoryId(categoryId);
+    try {
+      const res = await fetch('/api/link-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkId: linkId, categoryId: categoryId })
+      });
+
+      // parse the body 
+      const data = await res.json();
+
+      if (!res.ok) {
+        return toast.error(data.error);
+      };
+
+      toast.success("Successfully added link to category!");
+
+      // Update the local state to reflect the change
+      // Find the category from the categories list and add it to linkCategories
+      const addedCategory = categories.find(cat => cat.id === categoryId);
+      if (addedCategory && preview.link_categories) {
+        preview.link_categories.push({
+          categories: {
+            id: addedCategory.id,
+            name: addedCategory.name,
+            is_default: addedCategory.isDefault
+          }
+        });
+      }
+    } catch (error: any) {
+      return toast.error(error)
+    } finally {
+      setUpdatingCategoryId(null);
+    }
+  };
+
+  const handleCategorySelect = async (selectedCategoryId: string) => {
+    if (!linkId) {
+      toast.error("Link ID is missing!");
+      return;
+    }
+    await addLinkCategory(linkId, selectedCategoryId);
+  };
+
+  const deleteLinkCategory = async (linkId: string, categoryId: string) => {
+    setUpdatingCategoryId(categoryId);
+    try {
+      const res = await fetch('/api/link-categories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkId: linkId, categoryId: categoryId })
+      });
+
+      // parse the body 
+      const data = await res.json();
+
+      if (!res.ok) {
+        return toast.error(data.error);
+      };
+
+      toast.success("Successfully removed link from category!");
+
+      // Update the local state to reflect the change
+      // Remove the category from linkCategories
+      preview.link_categories = preview.link_categories?.filter(
+        (lc: any) => lc.categories?.id !== categoryId
+      ) || [];
+    } catch (error: any) {
+      return toast.error(error)
+    } finally {
+      setUpdatingCategoryId(null);
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      setIsCategoriesLoading(true);
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Failed to fetch categories");
+        return;
+      }
+
+      setCategories(data);
+    } catch (error) {
+      toast.error("Something went wrong");
+    } finally {
+      setIsCategoriesLoading(false);
+    }
+  };
 
   // wrap the onDelete inside a helper function 
   const handleDeleteClick = async () => {
@@ -243,6 +364,100 @@ export function LinkPreviewCard({
               <TooltipContent>Copy this link</TooltipContent>
             </Tooltip>
 
+            {/* Link Categories Section*/}
+            <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Toggle
+                      size="sm"
+                      variant="outline"
+                      className={'h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2 relative}'}
+                      pressed={linkCategories.length > 0}
+                    >
+                      {linkCategories.length > 0 ? (
+                        <>
+                          <Layers className="w-4 h-4 text-primary" />
+                          {linkCategories.length > 1 && (
+                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                              {linkCategories.length}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                    </Toggle>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {linkCategories.length > 0 ? 'Manage categories' : 'Add to category'}
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent className="w-80 sm:w-96" align="start">
+                <div className="flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">Manage Categories</h3>
+                  </div>
+
+                  <Separator className="-mx-3 w-[calc(100%+1.5rem)]" />
+
+                  {/* Categories List */}
+                  {isCategoriesLoading ? (
+                    <div className="flex flex-col gap-2">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center gap-2 p-2 rounded-md border">
+                          <Skeleton className="h-4 flex-1" />
+                          <Skeleton className="h-4 w-4 shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : categories.length === 0 ? (
+                    <div className="text-center py-6 text-sm text-muted-foreground">
+                      No categories available
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                      {categories.map((category) => {
+                        // Check if this category is already added to this link
+                        const isAlreadyAdded = linkCategories.some((lc: any) => lc.id === category.id);
+                        const isUpdating = updatingCategoryId === category.id;
+
+                        return (
+                          <button
+                            key={category.id}
+                            className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isUpdating}
+                            onClick={() => {
+                              if (isAlreadyAdded) {
+                                deleteLinkCategory(linkId!, category.id);
+                              } else {
+                                handleCategorySelect(category.id);
+                              }
+                            }}
+                          >
+                            <span className="flex-1 text-sm font-medium text-left truncate">
+                              {category.name}
+                            </span>
+                            <div className="shrink-0">
+                              {isUpdating ? (
+                                <Spinner className="w-4 h-4" />
+                              ) : isAlreadyAdded ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <></>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
             {/* Share button */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -263,7 +478,6 @@ export function LinkPreviewCard({
                   size="sm"
                   variant="outline"
                   className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
-                // title={isPinned ? "Unpin link" : "Pin link"}
                 >
                   {isPinning ? (
                     <Spinner className="w-4 h-4" />

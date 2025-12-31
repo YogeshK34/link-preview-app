@@ -303,11 +303,20 @@ export async function GET(request: Request) {
         // Fetch user's links (NO RLS!)
         const { data: links, error } = await supabase
             .from('links')
-            .select('*')
+            .select(
+                `*,
+                link_categories (
+                    categories (
+                        id,
+                        name,
+                        is_default
+                    )
+                )
+            `)
             .eq('user_id', user.id)
             .order('pinned', { ascending: false })
             .order('pinned_at', { ascending: false, nullsFirst: false })
-            .order(sortColumn, { ascending:sortOrder === 'asc' })
+            .order(sortColumn, { ascending: sortOrder === 'asc' })
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })
