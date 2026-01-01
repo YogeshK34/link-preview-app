@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, Settings } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -80,6 +80,7 @@ export default function Home() {
   const [name, setName] = useState<string>("");
   const [editCategoryName, setEditCategoryName] = useState<string>("");
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
 
   // Filter links based on search query
   const filteredLinks = searchQuery.trim()
@@ -520,6 +521,8 @@ export default function Home() {
 
     } catch (error: any) {
       return toast.error(error)
+    } finally {
+      setOpenCategoryId(null);
     };
   };
 
@@ -539,9 +542,10 @@ export default function Home() {
       fetchCategories();
     } catch (error: any) {
       return toast.error(error)
+    } finally {
+      setOpenCategoryId(null);
     };
   }
-
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background px-4 py-8">
@@ -563,29 +567,29 @@ export default function Home() {
 
                 <CardAction className="flex items-center gap-2">
                   {user ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleSignOut}
-                            className="rounded-full"
-                          >
-                            <Avatar>
-                              <AvatarImage
-                                src={user.user_metadata?.avatar_url || "/placeholder.svg"}
-                                alt={user.email || "User"}
-                              />
-                              <AvatarFallback>
-                                {user.email?.[0].toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Click to sign out</p>
-                        </TooltipContent>
-                      </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleSignOut}
+                          className="rounded-full"
+                        >
+                          <Avatar>
+                            <AvatarImage
+                              src={user.user_metadata?.avatar_url || "/placeholder.svg"}
+                              alt={user.email || "User"}
+                            />
+                            <AvatarFallback>
+                              {user.email?.[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Click to sign out</p>
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
                     <Avatar>
                       <AvatarFallback>
@@ -609,14 +613,14 @@ export default function Home() {
                     <Label className="text-sm font-medium text-muted-foreground">Enter the Link</Label>
                     <InputGroup className="[--radius:9999px]">
                       <InputGroupAddon className="pl-1.5">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <HelpCircle className="w-4 h-4 cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                              <p>Add your social/profile links to get a preview card.</p>
-                            </TooltipContent>
-                          </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            <p>Add your social/profile links to get a preview card.</p>
+                          </TooltipContent>
+                        </Tooltip>
                         <span>https://</span>
                       </InputGroupAddon>
                       {!user || authLoading ? (
@@ -744,12 +748,18 @@ export default function Home() {
                     <Skeleton className="h-4 w-56" />
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-                    <Skeleton className="h-10 w-10 shrink-0 rounded-md border" />
-                    <Skeleton className="h-10 w-24 sm:w-32 shrink-0 rounded-md border" />
-                    <Skeleton className="h-10 w-32 sm:w-40 shrink-0 rounded-md border" />
-                    <Skeleton className="h-10 w-10 shrink-0 rounded-md border" />
-                    <Skeleton className="h-10 w-32 sm:w-40 shrink-0 rounded-md border" />
-                    <Skeleton className="h-10 w-24 sm:w-32 shrink-0 rounded-md border" />
+                    {/* Refresh button */}
+                    <Skeleton className="h-10 w-10 shrink-0 rounded-md" />
+                    {/* Categories button */}
+                    <Skeleton className="h-10 w-10 sm:w-32 shrink-0 rounded-md" />
+                    {/* Sorting toggle group (2 items) */}
+                    <Skeleton className="h-10 w-20 sm:w-28 shrink-0 rounded-md" />
+                    {/* Sort order button */}
+                    <Skeleton className="h-10 w-10 shrink-0 rounded-md" />
+                    {/* View mode toggle group (2 items) */}
+                    <Skeleton className="h-10 w-20 sm:w-28 shrink-0 rounded-md" />
+                    {/* Search button */}
+                    <Skeleton className="h-10 w-20 sm:w-32 shrink-0 rounded-md" />
                   </div>
                 </div>
               </div>
@@ -758,17 +768,30 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
                 {Array.from({ length: skeletonCount }).map((_, i) => (
                   <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
+                    {/* Image Skeleton */}
                     <Skeleton className="w-full h-40" />
-                    <div className="flex-1 flex flex-col p-3 sm:p-4 gap-3">
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-3/4" />
+                    <div className="flex-1 flex flex-col p-3 sm:p-4 gap-2 sm:gap-3">
+                      {/* Title and Action Buttons */}
+                      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-1 sm:mb-2">
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-3/4" />
+                        </div>
+                        <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                          <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                          <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                          <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                          <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                          <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                        </div>
                       </div>
+                      {/* Site info */}
                       <div className="flex items-center gap-1.5">
-                        <Skeleton className="w-4 h-4 rounded-full" />
+                        <Skeleton className="w-3 h-3 rounded-full" />
                         <Skeleton className="h-3 w-24" />
                       </div>
-                      <div className="space-y-2 mt-1">
+                      {/* Description */}
+                      <div className="space-y-2">
                         <Skeleton className="h-3 w-full" />
                         <Skeleton className="h-3 w-5/6" />
                       </div>
@@ -793,22 +816,22 @@ export default function Home() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={handleRefreshLinks}
-                            disabled={isRefreshing}
-                            className="shrink-0"
-                          >
-                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Refresh links</p>
-                        </TooltipContent>
-                      </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleRefreshLinks}
+                          disabled={isRefreshing}
+                          className="shrink-0"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Refresh links</p>
+                      </TooltipContent>
+                    </Tooltip>
 
                     {/** Categories Section **/}
                     <Popover onOpenChange={(open) => open && fetchCategories()}>
@@ -890,9 +913,7 @@ export default function Home() {
                                           <>
                                             <Tooltip>
                                               <TooltipTrigger asChild>
-                                                <div>
-                                                  <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
-                                                </div>
+                                                <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
                                               </TooltipTrigger>
                                               <TooltipContent>Default Categories</TooltipContent>
                                             </Tooltip>
@@ -900,60 +921,96 @@ export default function Home() {
                                       </span>
                                       {!cat.readOnly && (
                                         <div className="flex items-center gap-1 shrink-0">
-
-                                          {/* Edit Category*/}
+                                          {openCategoryId !== cat.id ? (
                                             <Tooltip>
                                               <TooltipTrigger asChild>
                                                 <Button
                                                   size="icon"
                                                   variant="ghost"
                                                   className="h-8 w-8"
-                                                  onClick={() => {
-                                                    setEditingCategoryId(cat.id)
-                                                    setEditCategoryName(cat.name)
-                                                  }}
+                                                  onClick={() => setOpenCategoryId(cat.id)}
                                                 >
-                                                  <Pencil className="h-3.5 w-3.5" />
+                                                  <Settings className="h-3.5 w-3.5" />
                                                 </Button>
                                               </TooltipTrigger>
                                               <TooltipContent>
-                                                <p>Edit category</p>
+                                                <p>Manage category</p>
                                               </TooltipContent>
                                             </Tooltip>
-
-                                          {/*Delete Category */}
-                                            <Tooltip>
-                                              <AlertDialog>
+                                          ) : (
+                                            <>
+                                              {/* Edit Category */}
+                                              <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                  <AlertDialogTrigger asChild>
-                                                    <Button
-                                                      size="icon"
-                                                      variant="ghost"
-                                                      className="h-8 w-8 text-destructive hover:text-destructive"
-                                                    >
-                                                      <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                  </AlertDialogTrigger>
+                                                  <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8"
+                                                    onClick={() => {
+                                                      setEditingCategoryId(cat.id)
+                                                      setEditCategoryName(cat.name)
+                                                    }}
+                                                  >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                  </Button>
                                                 </TooltipTrigger>
-                                                <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
-                                                  <AlertDialogHeader>
-                                                    <AlertDialogTitle className="text-base sm:text-lg">Are you absolutely sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription className="text-sm">
-                                                      This action cannot be undone. This will permanently delete the category "{cat.name}" from your account.
-                                                    </AlertDialogDescription>
-                                                  </AlertDialogHeader>
-                                                  <AlertDialogFooter className="gap-2 sm:gap-2">
-                                                    <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => deleteCategory(cat.id)}>
-                                                      Delete
-                                                    </AlertDialogAction>
-                                                  </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                              </AlertDialog>
-                                              <TooltipContent>
-                                                <p>Delete category</p>
-                                              </TooltipContent>
-                                            </Tooltip>
+                                                <TooltipContent>
+                                                  <p>Edit category</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+
+                                              {/* Delete Category */}
+                                              <Tooltip>
+                                                <AlertDialog>
+                                                  <TooltipTrigger asChild>
+                                                    <AlertDialogTrigger asChild>
+                                                      <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                                      >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                      </Button>
+                                                    </AlertDialogTrigger>
+                                                  </TooltipTrigger>
+                                                  <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
+                                                    <AlertDialogHeader>
+                                                      <AlertDialogTitle className="text-base sm:text-lg">Are you absolutely sure?</AlertDialogTitle>
+                                                      <AlertDialogDescription className="text-sm">
+                                                        This action cannot be undone. This will permanently delete the category "{cat.name}" from your account.
+                                                      </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter className="gap-2 sm:gap-2">
+                                                      <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                                                      <AlertDialogAction onClick={() => deleteCategory(cat.id)}>
+                                                        Delete
+                                                      </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                  </AlertDialogContent>
+                                                </AlertDialog>
+                                                <TooltipContent>
+                                                  <p>Delete category</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+
+                                              {/* Close button */}
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8"
+                                                    onClick={() => setOpenCategoryId(null)}
+                                                  >
+                                                    <X className="h-3.5 w-3.5" />
+                                                  </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  <p>Close</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </>
+                                          )}
                                         </div>
                                       )}
                                     </>
@@ -996,156 +1053,156 @@ export default function Home() {
                     </Popover>
 
                     {/* Sorting Controls */}
-                      <ToggleGroup
-                        type="single"
-                        value={sortBy}
-                        onValueChange={(value) => value && setSortBy(value as 'created_at' | 'title')}
-                        variant="outline"
-                        spacing={0}
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <ToggleGroupItem
-                              value="created_at"
-                              aria-label="Sort by date"
-                              className={cn(
-                                sortBy === 'created_at' && "bg-secondary text-secondary-foreground"
-                              )}
-                            >
-                              <Calendar className="h-4 w-4" />
-                              <span className="ml-2 hidden md:inline">Date</span>
-                            </ToggleGroupItem>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Sort by creation date</p>
-                          </TooltipContent>
-                        </Tooltip>
+                    <ToggleGroup
+                      type="single"
+                      value={sortBy}
+                      onValueChange={(value) => value && setSortBy(value as 'created_at' | 'title')}
+                      variant="outline"
+                      spacing={0}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <ToggleGroupItem
+                            value="created_at"
+                            aria-label="Sort by date"
+                            className={cn(
+                              sortBy === 'created_at' && "bg-secondary text-secondary-foreground"
+                            )}
+                          >
+                            <Calendar className="h-4 w-4" />
+                            <span className="ml-2 hidden md:inline">Date</span>
+                          </ToggleGroupItem>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Sort by creation date</p>
+                        </TooltipContent>
+                      </Tooltip>
 
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <ToggleGroupItem
-                              value="title"
-                              aria-label="Sort by title"
-                              className={cn(
-                                sortBy === 'title' && "bg-secondary text-secondary-foreground"
-                              )}
-                            >
-                              <Type className="h-4 w-4" />
-                              <span className="ml-2 hidden md:inline">Title</span>
-                            </ToggleGroupItem>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Sort by title</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </ToggleGroup>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <ToggleGroupItem
+                            value="title"
+                            aria-label="Sort by title"
+                            className={cn(
+                              sortBy === 'title' && "bg-secondary text-secondary-foreground"
+                            )}
+                          >
+                            <Type className="h-4 w-4" />
+                            <span className="ml-2 hidden md:inline">Title</span>
+                          </ToggleGroupItem>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Sort by title</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </ToggleGroup>
 
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                          className="shrink-0"
+                        >
+                          {sortOrder === 'asc' ? (
+                            <ArrowUp className="h-4 w-4" />
+                          ) : (
+                            <ArrowDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    {/* List & Grid view */}
+                    <ToggleGroup
+                      type="single"
+                      value={viewMode}
+                      onValueChange={(value) => value && setViewMode(value as "grid" | "list")}
+                      variant="outline"
+                      spacing={0}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <ToggleGroupItem
+                            value="grid"
+                            aria-label="Grid view"
+                            className={cn(
+                              viewMode === 'grid' && "bg-secondary text-secondary-foreground"
+                            )}
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            <span className="ml-2 hidden md:inline">Grid</span>
+                          </ToggleGroupItem>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Grid view</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <ToggleGroupItem
+                            value="list"
+                            aria-label="List view"
+                            className={cn(
+                              viewMode === 'list' && "bg-secondary text-secondary-foreground"
+                            )}
+                          >
+                            <List className="h-4 w-4" />
+                            <span className="ml-2 hidden md:inline">List</span>
+                          </ToggleGroupItem>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>List view</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </ToggleGroup>
+
+                    {(sortBy !== 'created_at' || sortOrder !== 'desc' || viewMode !== 'grid') && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => {
+                              setViewMode('grid');
+                              setSortBy('created_at');
+                              setSortOrder('desc');
+                            }}
+                            variant="outline"
+                            size="icon"
+                            className="shrink-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Reset filters</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    {!isOpen && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             variant="outline"
-                            size="icon"
-                            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                            className="shrink-0"
+                            onClick={() => setIsOpen(true)}
+                            className="gap-1 sm:gap-2 shrink-0 px-3 sm:px-4"
                           >
-                            {sortOrder === 'asc' ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : (
-                              <ArrowDown className="h-4 w-4" />
-                            )}
+                            <span className="text-sm">Search</span>
+                            <KbdGroup className="gap-0.5 sm:gap-1">
+                              <Kbd className="text-xs px-1 py-0.5 h-5 min-w-[18px]">⌘</Kbd>
+                              <Kbd className="text-xs px-1 py-0.5 h-5 min-w-[18px]">K</Kbd>
+                            </KbdGroup>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</p>
+                          <p>Search links (⌘K)</p>
                         </TooltipContent>
                       </Tooltip>
-
-                    {/* List & Grid view */}
-                      <ToggleGroup
-                        type="single"
-                        value={viewMode}
-                        onValueChange={(value) => value && setViewMode(value as "grid" | "list")}
-                        variant="outline"
-                        spacing={0}
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <ToggleGroupItem
-                              value="grid"
-                              aria-label="Grid view"
-                              className={cn(
-                                viewMode === 'grid' && "bg-secondary text-secondary-foreground"
-                              )}
-                            >
-                              <LayoutGrid className="h-4 w-4" />
-                              <span className="ml-2 hidden md:inline">Grid</span>
-                            </ToggleGroupItem>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Grid view</p>
-                          </TooltipContent>
-                        </Tooltip>
-
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <ToggleGroupItem
-                              value="list"
-                              aria-label="List view"
-                              className={cn(
-                                viewMode === 'list' && "bg-secondary text-secondary-foreground"
-                              )}
-                            >
-                              <List className="h-4 w-4" />
-                              <span className="ml-2 hidden md:inline">List</span>
-                            </ToggleGroupItem>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>List view</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </ToggleGroup>
-
-                    {(sortBy !== 'created_at' || sortOrder !== 'desc' || viewMode !== 'grid') && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              onClick={() => {
-                                setViewMode('grid');
-                                setSortBy('created_at');
-                                setSortOrder('desc');
-                              }}
-                              variant="outline"
-                              size="icon"
-                              className="shrink-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Reset filters</p>
-                          </TooltipContent>
-                        </Tooltip>
-                    )}
-
-                    {!isOpen && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              onClick={() => setIsOpen(true)}
-                              className="gap-1 sm:gap-2 shrink-0 px-2 sm:px-4"
-                            >
-                              <span className="text-sm hidden sm:inline">Search</span>
-                              <KbdGroup className="gap-0.5 sm:gap-1">
-                                <Kbd className="text-xs px-1 py-0.5 h-5 min-w-[18px]">⌘</Kbd>
-                                <Kbd className="text-xs px-1 py-0.5 h-5 min-w-[18px]">K</Kbd>
-                              </KbdGroup>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Search links (⌘K)</p>
-                          </TooltipContent>
-                        </Tooltip>
                     )}
                   </div>
                 </div>
@@ -1160,7 +1217,7 @@ export default function Home() {
                       }}
                       placeholder="Search links..."
                       autoFocus
-                      className="h-10 sm:h-11"
+                      className="h-12 sm:h-11"
                     />
                   </Command>
                 )}
