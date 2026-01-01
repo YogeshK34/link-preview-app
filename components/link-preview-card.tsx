@@ -1,6 +1,6 @@
 import { Check, Copy, ExternalLink, Layers, Pin, Plus, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Toggle } from "./ui/toggle";
 import { Spinner } from "./ui/spinner";
@@ -9,10 +9,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Separator } from "./ui/separator";
-import { Skeleton } from "./ui/skeleton";
 
 /* eslint-disable */
-
 // XSS Protection: URL sanitization utility
 const sanitizeUrl = (url: string | null | undefined): string => {
   if (!url) return "#";
@@ -73,34 +71,34 @@ const sanitizeImageUrl = (url: string | null | undefined): string => {
   }
 };
 
+type Category = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  readOnly: boolean;
+};
+
 export function LinkPreviewCard({
   preview,
   onDelete,
   onPin,
   linkId,
   isListView = false,
+  categories = [],
 }: {
   preview: any
   onDelete?: (id: string) => Promise<void>
   onPin?: (id: string, pinned: boolean, pinned_at: string | null) => void
   linkId?: string
   isListView?: boolean
+  categories?: Category[]
 }) {
   const [isCopied, setIsCopied] = useState<boolean>(false)
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const [isPinning, setIsPinning] = useState<boolean>(false)
   const [isPinned, setIsPinned] = useState<boolean>(preview.pinned || false)
-  const [isCategoriesLoading, setIsCategoriesLoading] = useState<boolean>(true);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState<boolean>(false);
   const [updatingCategoryId, setUpdatingCategoryId] = useState<string | null>(null);
-
-  type Category = {
-    id: string;
-    name: string;
-    isDefault: boolean;
-    readOnly: boolean;
-  };
 
   // Extract the categories that are already linked to this link
   // Filter to only show categories that still exist in the categories list (in case a category was deleted)
@@ -188,29 +186,6 @@ export function LinkPreviewCard({
       setUpdatingCategoryId(null);
     }
   }
-
-  const fetchCategories = async () => {
-    try {
-      setIsCategoriesLoading(true);
-      const res = await fetch("/api/categories");
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Failed to fetch categories");
-        return;
-      }
-
-      setCategories(data);
-    } catch (error) {
-      toast.error("Something went wrong");
-    } finally {
-      setIsCategoriesLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []); // Only run once on mount
 
   // wrap the onDelete inside a helper function 
   const handleDeleteClick = async () => {
@@ -368,10 +343,7 @@ export function LinkPreviewCard({
             </Tooltip>
 
             {/* Link Categories Section*/}
-            <Popover open={isCategoryPopoverOpen} onOpenChange={(open) => {
-              setIsCategoryPopoverOpen(open);
-              if (open) fetchCategories(); // Refresh when opening
-            }}>
+            <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <PopoverTrigger asChild>
@@ -410,16 +382,7 @@ export function LinkPreviewCard({
                   <Separator className="-mx-3 w-[calc(100%+1.5rem)]" />
 
                   {/* Categories List */}
-                  {isCategoriesLoading ? (
-                    <div className="flex flex-col gap-2">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="flex items-center gap-2 p-2 rounded-md border">
-                          <Skeleton className="h-4 flex-1" />
-                          <Skeleton className="h-4 w-4 shrink-0" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : categories.length === 0 ? (
+                  {categories.length === 0 ? (
                     <div className="text-center py-6 text-sm text-muted-foreground">
                       No categories available
                     </div>

@@ -9,7 +9,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   Pagination,
@@ -563,7 +563,6 @@ export default function Home() {
 
                 <CardAction className="flex items-center gap-2">
                   {user ? (
-                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -587,7 +586,6 @@ export default function Home() {
                           <p>Click to sign out</p>
                         </TooltipContent>
                       </Tooltip>
-                    </TooltipProvider>
                   ) : (
                     <Avatar>
                       <AvatarFallback>
@@ -611,7 +609,6 @@ export default function Home() {
                     <Label className="text-sm font-medium text-muted-foreground">Enter the Link</Label>
                     <InputGroup className="[--radius:9999px]">
                       <InputGroupAddon className="pl-1.5">
-                        <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <HelpCircle className="w-4 h-4 cursor-help" />
@@ -620,7 +617,6 @@ export default function Home() {
                               <p>Add your social/profile links to get a preview card.</p>
                             </TooltipContent>
                           </Tooltip>
-                        </TooltipProvider>
                         <span>https://</span>
                       </InputGroupAddon>
                       {!user || authLoading ? (
@@ -734,7 +730,7 @@ export default function Home() {
           {preview ? (
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4 text-foreground">Latest Preview</h2>
-              <LinkPreviewCard preview={preview} />
+              <LinkPreviewCard preview={preview} categories={categories} />
             </div>
           ) : null}
 
@@ -797,7 +793,6 @@ export default function Home() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -814,7 +809,6 @@ export default function Home() {
                           <p>Refresh links</p>
                         </TooltipContent>
                       </Tooltip>
-                    </TooltipProvider>
 
                     {/** Categories Section **/}
                     <Popover onOpenChange={(open) => open && fetchCategories()}>
@@ -892,15 +886,22 @@ export default function Home() {
                                     <>
                                       <span className="flex-1 text-sm font-medium truncate">
                                         {cat.name}
-                                        {cat.readOnly && (
-                                          <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
-                                        )}
+                                        {cat.readOnly &&
+                                          <>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <div>
+                                                  <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
+                                                </div>
+                                              </TooltipTrigger>
+                                              <TooltipContent>Default Categories</TooltipContent>
+                                            </Tooltip>
+                                          </>}
                                       </span>
                                       {!cat.readOnly && (
                                         <div className="flex items-center gap-1 shrink-0">
 
                                           {/* Edit Category*/}
-                                          <TooltipProvider>
                                             <Tooltip>
                                               <TooltipTrigger asChild>
                                                 <Button
@@ -919,10 +920,8 @@ export default function Home() {
                                                 <p>Edit category</p>
                                               </TooltipContent>
                                             </Tooltip>
-                                          </TooltipProvider>
 
                                           {/*Delete Category */}
-                                          <TooltipProvider>
                                             <Tooltip>
                                               <AlertDialog>
                                                 <TooltipTrigger asChild>
@@ -955,7 +954,6 @@ export default function Home() {
                                                 <p>Delete category</p>
                                               </TooltipContent>
                                             </Tooltip>
-                                          </TooltipProvider>
                                         </div>
                                       )}
                                     </>
@@ -998,7 +996,6 @@ export default function Home() {
                     </Popover>
 
                     {/* Sorting Controls */}
-                    <TooltipProvider>
                       <ToggleGroup
                         type="single"
                         value={sortBy}
@@ -1042,9 +1039,7 @@ export default function Home() {
                           </TooltipContent>
                         </Tooltip>
                       </ToggleGroup>
-                    </TooltipProvider>
 
-                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -1064,10 +1059,8 @@ export default function Home() {
                           <p>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</p>
                         </TooltipContent>
                       </Tooltip>
-                    </TooltipProvider>
 
                     {/* List & Grid view */}
-                    <TooltipProvider>
                       <ToggleGroup
                         type="single"
                         value={viewMode}
@@ -1111,10 +1104,8 @@ export default function Home() {
                           </TooltipContent>
                         </Tooltip>
                       </ToggleGroup>
-                    </TooltipProvider>
 
                     {(sortBy !== 'created_at' || sortOrder !== 'desc' || viewMode !== 'grid') && (
-                      <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -1134,11 +1125,9 @@ export default function Home() {
                             <p>Reset filters</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
                     )}
 
                     {!isOpen && (
-                      <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -1157,7 +1146,6 @@ export default function Home() {
                             <p>Search links (⌘K)</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
                     )}
                   </div>
                 </div>
@@ -1181,13 +1169,13 @@ export default function Home() {
               {viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
                   {currentLinks.map((link) => (
-                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} />
+                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} categories={categories} />
                   ))}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 sm:gap-4 w-full">
                   {currentLinks.map((link) => (
-                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} isListView />
+                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} categories={categories} isListView />
                   ))}
                 </div>
               )}
