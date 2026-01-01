@@ -175,7 +175,7 @@ export function LinkPreviewCard({
         return toast.error(data.error);
       };
 
-      toast.success("Added category to link!");
+      toast.success("Removed category from link!");
 
       // Update the local state to reflect the change
       // Remove the category from linkCategories
