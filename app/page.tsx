@@ -309,23 +309,8 @@ export default function Home() {
     }
   }, [authLoading, user])
 
-  // Close search when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-        setSearchQuery('')
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen])
+  // Close search only on Escape (handled in handleKeyDown)
+  // Removed auto-close on outside click to prevent flicker when interacting with search results
 
 
 
@@ -479,7 +464,7 @@ export default function Home() {
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name })
+        body: JSON.stringify({ name: name.trim() })
       });
 
       const data = await res.json();
@@ -498,6 +483,19 @@ export default function Home() {
   }
 
   const updateCategory = async (id: string) => {
+
+    // find the current category 
+    const currentCategory = categories.find(cat => cat.id === id);
+
+    // verify if user actually updated the category
+    if (editCategoryName.trim() === currentCategory?.name) {
+      toast.message("No changes made!");
+      setEditingCategoryId(null);
+      setOpenCategoryId(null);
+      return;
+    }
+
+    // name validation
     if (!editCategoryName.trim()) {
       return toast.error("Name cannot be empty!")
     }
@@ -506,7 +504,7 @@ export default function Home() {
       const res = await fetch(`/api/categories/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editCategoryName })
+        body: JSON.stringify({ name: editCategoryName.trim() })
       })
 
       const data = await res.json();
@@ -1208,18 +1206,36 @@ export default function Home() {
                 </div>
 
                 {isOpen && (
-                  <Command ref={searchRef} className="rounded-lg border shadow-md w-full">
-                    <CommandInput
-                      value={searchQuery}
-                      onValueChange={(value) => {
-                        setSearchQuery(value)
-                        setCurrentPage(1)
-                      }}
-                      placeholder="Search links..."
-                      autoFocus
-                      className="h-12 sm:h-11"
-                    />
-                  </Command>
+                  <div className="relative">
+                    <Command ref={searchRef} className="rounded-lg border shadow-md w-full">
+                      <CommandInput
+                        value={searchQuery}
+                        onValueChange={(value) => {
+                          setSearchQuery(value)
+                          setCurrentPage(1)
+                        }}
+                        placeholder="Search links..."
+                        autoFocus
+                        className="h-12 sm:h-11"
+                      />
+                    </Command>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setIsOpen(false)
+                            setSearchQuery('')
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Esc or click to close the search box</TooltipContent>
+                    </Tooltip>
+                  </div>
                 )}
               </div>
 
