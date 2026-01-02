@@ -372,7 +372,7 @@ export function LinkPreviewCard({
                   {linkCategories.length > 0 ? 'Manage categories' : 'Add to a category'}
                 </TooltipContent>
               </Tooltip>
-              <PopoverContent className="w-80 sm:w-96" align="start">
+              <PopoverContent className="w-96 sm:w-[480px]" align="start">
                 <div className="flex flex-col gap-4">
                   {/* Header */}
                   <div className="flex items-center justify-between">
@@ -406,7 +406,7 @@ export function LinkPreviewCard({
                       )}
 
                       {/* Show all categories for selection */}
-                      <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
                         {categories.map((category) => {
                           const isAlreadyAdded = linkCategories.some((lc: any) => lc.id === category.id);
                           const isUpdating = updatingCategoryId === category.id;

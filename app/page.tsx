@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, Settings } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, Settings, Filter } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -1094,6 +1094,16 @@ export default function Home() {
                         </TooltipContent>
                       </Tooltip>
                     </ToggleGroup>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant='secondary'>
+                          <Filter />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Sort by categories</p></TooltipContent>
+                    </Tooltip>
 
                     <Tooltip>
                       <TooltipTrigger asChild>
