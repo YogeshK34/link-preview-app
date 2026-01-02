@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, Settings, Filter } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, Settings } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -57,6 +57,7 @@ export default function Home() {
   const [categoriesLoading, setIsCategoriesLoading] = useState<boolean>(true)
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState<string>("")
+  const [sortLinksByCategoryId, setSortLinksByCategoryId] = useState<string | null>(null);
   const router = useRouter()
 
   type Category = {
@@ -74,6 +75,7 @@ export default function Home() {
   // ============ SORTING STATES ============
   const [sortBy, setSortBy] = useState<'created_at' | 'title'>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
 
   // ============ CATEGORY STATES ============
   const [categories, setCategories] = useState<Category[]>([]);
@@ -228,8 +230,11 @@ export default function Home() {
       // Build URL with query parameters
       const params = new URLSearchParams({
         sort: sortBy,
-        order: sortOrder
+        order: sortOrder,
       })
+      if (sortLinksByCategoryId) {
+        params.set('categoryId', sortLinksByCategoryId)
+      }
 
       const res = await fetch(`/api/links?${params.toString()}`, { method: "GET" })
 
@@ -268,7 +273,7 @@ export default function Home() {
       fetchLinks()
       fetchCategories()
     }
-  }, [authLoading, user, sortBy, sortOrder])
+  }, [authLoading, user, sortBy, sortOrder, sortLinksByCategoryId])
 
   const handleRefreshLinks = async () => {
     if (!user || isRefreshing) return
@@ -732,7 +737,7 @@ export default function Home() {
           {preview ? (
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4 text-foreground">Latest Preview</h2>
-              <LinkPreviewCard preview={preview} categories={categories} />
+              <LinkPreviewCard preview={preview} categories={categories} onCategoryChange={fetchLinks} />
             </div>
           ) : null}
 
@@ -799,8 +804,42 @@ export default function Home() {
               </div>
             </div>
 
-          ) : links.length > 0 ? (
+          ) : user ? (
             <div className="w-full">
+              {/* Category Filter Section */}
+              {categories.length > 0 && (
+                <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Layers className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-sm font-medium">Filter by Category</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={sortLinksByCategoryId === null ? "default" : "outline"}
+                      onClick={() => setSortLinksByCategoryId(null)}
+                      className="h-8"
+                    >
+                      All Links
+                    </Button>
+                    {categories.map((cat) => (
+                      <Button
+                        key={cat.id}
+                        size="sm"
+                        variant={sortLinksByCategoryId === cat.id ? "default" : "outline"}
+                        onClick={() => setSortLinksByCategoryId(cat.id)}
+                        className="h-8 gap-1.5"
+                      >
+                        {cat.name}
+                        {cat.readOnly && (
+                          <span className="text-xs">🔒</span>
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col gap-3 mb-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div>
@@ -907,15 +946,14 @@ export default function Home() {
                                     <>
                                       <span className="flex-1 text-sm font-medium truncate">
                                         {cat.name}
-                                        {cat.readOnly &&
-                                          <>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
-                                              </TooltipTrigger>
-                                              <TooltipContent>Default Categories</TooltipContent>
-                                            </Tooltip>
-                                          </>}
+                                        {cat.readOnly && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Default Categories</TooltipContent>
+                                          </Tooltip>
+                                        )}
                                       </span>
                                       {!cat.readOnly && (
                                         <div className="flex items-center gap-1 shrink-0">
@@ -1097,16 +1135,6 @@ export default function Home() {
 
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant='secondary'>
-                          <Filter />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Sort by categories</p></TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
                         <Button
                           variant="outline"
                           size="icon"
@@ -1249,57 +1277,79 @@ export default function Home() {
                 )}
               </div>
 
-              {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
-                  {currentLinks.map((link) => (
-                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} categories={categories} />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3 sm:gap-4 w-full">
-                  {currentLinks.map((link) => (
-                    <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} categories={categories} isListView />
-                  ))}
-                </div>
-              )}
-
-              {/*PAGINATION COMPONENT*/}
-              {totalPages > 1 && (
-                <div className="mt-8 flex justify-center">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        />
-                      </PaginationItem>
-
-                      {getPageNumbers().map((page, index) => (
-                        <PaginationItem key={index}>
-                          {typeof page === 'number' ? (
-                            <PaginationLink
-                              onClick={() => handlePageChange(page)}
-                              isActive={currentPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          ) : (
-                            <PaginationEllipsis />
-                          )}
-                        </PaginationItem>
+              {/* Show links or empty state based on whether there are links */}
+              {links.length > 0 ? (
+                <>
+                  {viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
+                      {currentLinks.map((link) => (
+                        <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} categories={categories} onCategoryChange={fetchLinks} />
                       ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 sm:gap-4 w-full">
+                      {currentLinks.map((link) => (
+                        <LinkPreviewCard key={link.id} preview={link} linkId={link.id} onDelete={deleteLinks} onPin={handlePinToggle} categories={categories} isListView onCategoryChange={fetchLinks} />
+                      ))}
+                    </div>
+                  )}
 
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
+                  {/*PAGINATION COMPONENT*/}
+                  {totalPages > 1 && (
+                    <div className="mt-8 flex justify-center">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+
+                          {getPageNumbers().map((page, index) => (
+                            <PaginationItem key={index}>
+                              {typeof page === 'number' ? (
+                                <PaginationLink
+                                  onClick={() => handlePageChange(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              ) : (
+                                <PaginationEllipsis />
+                              )}
+                            </PaginationItem>
+                          ))}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>
+                      {sortLinksByCategoryId
+                        ? `No links in "${categories.find(cat => cat.id === sortLinksByCategoryId)?.name}" category`
+                        : "No link added yet"
+                      }
+                    </EmptyTitle>
+                    <EmptyDescription>
+                      {sortLinksByCategoryId
+                        ? "Try adding links to this category or clear the filter to see all links"
+                        : "Start by entering a link above"
+                      }
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               )}
             </div>
           ) : (

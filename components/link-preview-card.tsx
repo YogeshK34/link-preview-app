@@ -85,6 +85,7 @@ export function LinkPreviewCard({
   linkId,
   isListView = false,
   categories = [],
+  onCategoryChange,
 }: {
   preview: any
   onDelete?: (id: string) => Promise<void>
@@ -92,6 +93,7 @@ export function LinkPreviewCard({
   linkId?: string
   isListView?: boolean
   categories?: Category[]
+  onCategoryChange?: () => void
 }) {
   const [isCopied, setIsCopied] = useState<boolean>(false)
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
@@ -142,6 +144,11 @@ export function LinkPreviewCard({
           }
         });
       }
+
+      // Trigger parent refresh if callback provided
+      if (onCategoryChange) {
+        onCategoryChange();
+      }
     } catch (error: any) {
       return toast.error(error)
     } finally {
@@ -180,6 +187,11 @@ export function LinkPreviewCard({
       preview.link_categories = preview.link_categories?.filter(
         (lc: any) => lc.categories?.id !== categoryId
       ) || [];
+
+      // Trigger parent refresh if callback provided
+      if (onCategoryChange) {
+        onCategoryChange();
+      }
     } catch (error: any) {
       return toast.error(error)
     } finally {

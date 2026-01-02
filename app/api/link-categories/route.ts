@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 /* eslint-disable */
-// here I'll write the POST route for linking categories with links 
+// POST route
 export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
@@ -78,3 +78,5 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     };
 };
+
+// GET route

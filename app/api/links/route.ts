@@ -290,6 +290,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const sort = searchParams.get('sort');
         const order = searchParams.get('order');
+        const categoryId = searchParams.get('categoryId');
 
         const allowedSortColumn = ['created_at', 'title'];
         const allowedOrder = ['asc', 'desc'];
@@ -300,23 +301,29 @@ export async function GET(request: Request) {
         const sortOrder = allowedOrder.includes(order ?? '')
             ? order : 'desc'
 
-        // Fetch user's links (NO RLS!)
-        const { data: links, error } = await supabase
+        // Build the query with category filter in the select if needed
+        const categoryFilter = categoryId 
+            ? `link_categories!inner(category_id, categories!inner(id, name, is_default))`
+            : `link_categories(categories(id, name, is_default))`
+
+        let query = supabase
             .from('links')
-            .select(
-                `*,
-                link_categories (
-                    categories (
-                        id,
-                        name,
-                        is_default
-                    )
-                )
-            `)
+            .select(`*, ${categoryFilter}`)
             .eq('user_id', user.id)
+
+        // Only filter by category if categoryId is provided
+        if (categoryId) {
+            query = query.eq('link_categories.category_id', categoryId)
+        }
+
+        // Apply ordering
+        query = query
             .order('pinned', { ascending: false })
             .order('pinned_at', { ascending: false, nullsFirst: false })
             .order(sortColumn, { ascending: sortOrder === 'asc' })
+
+        // Execute query
+        const { data: links, error } = await query
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })
