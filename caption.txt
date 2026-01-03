@@ -1,0 +1,13 @@
+Another month, another website, simple idea, was fed-up of saving links to whatsapp DM, so 
+created a website to store all the links, and the I didn't spent much time deciding the application name,
+you guessed correctly, a store which stores links = Links Storer, that simply. 
+Took nothing else then some small things like low CGPA, low attendance, a lot of documentation reading, 
+a lot of attacks knowledge, a lot of programming obviously, and hopefully it'll be my last project for Nextjs,
+thinking of switching to React and also try out GraphQL instead of REST, let's see how that goes, and before some of you guys 
+would  think like promoting my project, initially I made it for me, for you know how this world works, if you do not 
+showcase what you're doing, recruiters or some people with think, I am just some other guy squandering my time at LinkedIn, 
+and also a reality check for myself that how far i've come from hating frontend to actually liking it, and designing what I 
+call is a consistent UI overall and will be maintaining it for future apps as well and my ecosystem is Vercel (nextjs, shadcn,animate-ui, supabase, typescript) 
+all you need to ship a project, and here's the github link for the project: github.com/if-you-wanna-know-stack-connect-with-me because obviously due to some good
+ guys who do not want to clone, copy or use my project, I chose to publicfy my github link project, I really do care about those prople. they care about us so much 
+ ,we gotta respect that feeling

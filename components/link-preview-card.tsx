@@ -78,6 +78,14 @@ type Category = {
   readOnly: boolean;
 };
 
+// Helper function to get consistent emoji for each category
+const getCategoryEmoji = (categoryId: string, isReadOnly: boolean) => {
+  if (isReadOnly) return '🔒'
+  const emojis = ['📚', '🎯', '🚀', '💡', '🎨', '🔥', '⭐', '🌟', '💼', '🎵', '🎮', '🏆', '🌈', '🎪', '🎭', '🎬', '📱', '💻', '🖥️', '⚡']
+  const index = categoryId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % emojis.length
+  return emojis[index]
+}
+
 export function LinkPreviewCard({
   preview,
   onDelete,
@@ -403,13 +411,14 @@ export function LinkPreviewCard({
                       {/* Show linked categories at the top if any exist */}
                       {linkCategories.length > 0 && (
                         <>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="grid grid-cols-2 gap-2">
                             {linkCategories.map((cat: any) => (
                               <span 
                                 key={cat.id}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary border border-primary/20"
+                                className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-md bg-primary/10 text-primary border border-primary/20"
                               >
-                                {cat.name}
+                                <span className="text-xs">{getCategoryEmoji(cat.id, cat.is_default)}</span>
+                                <span className="truncate">{cat.name}</span>
                               </span>
                             ))}
                           </div>
@@ -437,6 +446,7 @@ export function LinkPreviewCard({
                                 }
                               }}
                             >
+                              <span className="text-xs shrink-0">{getCategoryEmoji(category.id, category.readOnly)}</span>
                               <span className="flex-1 text-sm font-medium text-left truncate">
                                 {category.name}
                               </span>

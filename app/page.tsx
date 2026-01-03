@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, Settings } from "lucide-react"
+import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, NotebookPen } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -51,6 +51,7 @@ export default function Home() {
   const searchRef = useRef<HTMLDivElement>(null)
   const [links, setLinks] = useState<any[]>([])
   const [linksLoading, setIsLinksLoading] = useState<boolean>(true)
+  const [isFilteringLinks, setIsFilteringLinks] = useState<boolean>(false)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [isRefreshingCategories, setIsRefreshingCategories] = useState<boolean>(false)
@@ -58,6 +59,7 @@ export default function Home() {
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [sortLinksByCategoryId, setSortLinksByCategoryId] = useState<string | null>(null);
+  const [isEditModeCategories, setIsEditModeCategories] = useState<boolean>(false);
   const router = useRouter()
 
   type Category = {
@@ -76,6 +78,13 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<'created_at' | 'title'>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
+  // Helper function to get consistent emoji for each category
+  const getCategoryEmoji = (categoryId: string, isReadOnly: boolean) => {
+    if (isReadOnly) return '🔒'
+    const emojis = ['📚', '🎯', '🚀', '💡', '🎨', '🔥', '⭐', '🌟', '💼', '🎵', '🎮', '🏆', '🌈', '🎪', '🎭', '🎬', '📱', '💻', '🖥️', '⚡']
+    const index = categoryId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % emojis.length
+    return emojis[index]
+  }
 
   // ============ CATEGORY STATES ============
   const [categories, setCategories] = useState<Category[]>([]);
@@ -264,12 +273,14 @@ export default function Home() {
       toast.error("Failed to load your links!")
     } finally {
       setIsLinksLoading(false)
+      setIsFilteringLinks(false)
     }
   }
 
   useEffect(() => {
     if (authLoading) return
     if (user) {
+      setIsFilteringLinks(true)
       fetchLinks()
       fetchCategories()
     }
@@ -757,6 +768,8 @@ export default function Home() {
                     <Skeleton className="h-10 w-10 sm:w-32 shrink-0 rounded-md" />
                     {/* Sorting toggle group (2 items) */}
                     <Skeleton className="h-10 w-20 sm:w-28 shrink-0 rounded-md" />
+                    {/* Category filter button */}
+                    <Skeleton className="h-10 w-10 sm:w-20 shrink-0 rounded-md" />
                     {/* Sort order button */}
                     <Skeleton className="h-10 w-10 shrink-0 rounded-md" />
                     {/* View mode toggle group (2 items) */}
@@ -806,40 +819,6 @@ export default function Home() {
 
           ) : user ? (
             <div className="w-full">
-              {/* Category Filter Section */}
-              {categories.length > 0 && (
-                <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Layers className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-medium">Filter by Category</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant={sortLinksByCategoryId === null ? "default" : "outline"}
-                      onClick={() => setSortLinksByCategoryId(null)}
-                      className="h-8"
-                    >
-                      All Links
-                    </Button>
-                    {categories.map((cat) => (
-                      <Button
-                        key={cat.id}
-                        size="sm"
-                        variant={sortLinksByCategoryId === cat.id ? "default" : "outline"}
-                        onClick={() => setSortLinksByCategoryId(cat.id)}
-                        className="h-8 gap-1.5"
-                      >
-                        {cat.name}
-                        {cat.readOnly && (
-                          <span className="text-xs">🔒</span>
-                        )}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="flex flex-col gap-3 mb-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div>
@@ -898,161 +877,196 @@ export default function Home() {
 
                           {/* Categories List */}
                           {categoriesLoading ? (
-                            <div className="flex flex-col gap-2">
-                              {Array.from({ length: 3 }).map((_, i) => (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {Array.from({ length: 4 }).map((_, i) => (
                                 <div key={i} className="flex items-center gap-2 p-2 rounded-md border">
                                   <Skeleton className="h-4 flex-1" />
-                                  <Skeleton className="h-8 w-8 shrink-0" />
-                                  <Skeleton className="h-8 w-8 shrink-0" />
+                                  <Skeleton className="h-6 w-6 shrink-0" />
                                 </div>
                               ))}
                             </div>
                           ) : categories.length > 0 ? (
-                            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                              {categories.map((cat) => (
-                                <div
-                                  key={cat.id}
-                                  className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors"
-                                >
-                                  {editingCategoryId === cat.id ? (
-                                    <>
-                                      <Input
-                                        type="text"
-                                        placeholder="Category name"
-                                        value={editCategoryName}
-                                        onChange={(e) => setEditCategoryName(e.target.value)}
-                                        className="h-8 flex-1"
-                                        autoFocus
-                                        autoComplete='off'
-                                      />
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8 shrink-0"
-                                        onClick={() => updateCategory(cat.id)}
-                                      >
-                                        <Check className="h-4 w-4 text-green-600" />
-                                      </Button>
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8 shrink-0"
-                                        onClick={() => setEditingCategoryId(null)}
-                                      >
-                                        <X className="h-4 w-4" />
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <span className="flex-1 text-sm font-medium truncate">
-                                        {cat.name}
-                                        {cat.readOnly && (
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <span className="ml-1.5 text-xs text-muted-foreground">🔒</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent>Default Categories</TooltipContent>
-                                          </Tooltip>
-                                        )}
-                                      </span>
-                                      {!cat.readOnly && (
-                                        <div className="flex items-center gap-1 shrink-0">
-                                          {openCategoryId !== cat.id ? (
+                            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+
+                              {/* this button will open only those categories which are editable (!cat.readonly) */}
+                              <Button
+                                variant='secondary'
+                                onClick={() => { setIsEditModeCategories(prev => !prev) }}
+                                className="w-full shrink-0"
+                              >
+                                <NotebookPen />
+                                {isEditModeCategories ? "View All Categories" : "Edit Categories"}
+                              </Button>
+
+                              {isEditModeCategories ? (
+                                // Show only editable categories with edit/delete controls
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {categories.filter(cat => !cat.readOnly).map((cat) => (
+                                    <div
+                                      key={cat.id}
+                                      className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors"
+                                    >
+                                      {editingCategoryId === cat.id ? (
+                                        <>
+                                          <Input
+                                            type="text"
+                                            placeholder="Category name"
+                                            value={editCategoryName}
+                                            onChange={(e) => setEditCategoryName(e.target.value)}
+                                            className="h-8 flex-1"
+                                            autoFocus
+                                            autoComplete='off'
+                                          />
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 shrink-0"
+                                            onClick={() => updateCategory(cat.id)}
+                                          >
+                                            <Check className="h-4 w-4 text-green-600" />
+                                          </Button>
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 shrink-0"
+                                            onClick={() => setEditingCategoryId(null)}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="flex-1 text-sm font-medium truncate flex items-center gap-1.5">
+                                            <span className="text-xs">{getCategoryEmoji(cat.id, cat.readOnly)}</span>
+                                            {cat.name}
+                                          </span>
+                                          {/* Edit and Delete buttons directly visible in edit mode */}
+                                          <div className="flex items-center gap-1 shrink-0">
                                             <Tooltip>
                                               <TooltipTrigger asChild>
                                                 <Button
                                                   size="icon"
                                                   variant="ghost"
                                                   className="h-8 w-8"
-                                                  onClick={() => setOpenCategoryId(cat.id)}
+                                                  onClick={() => {
+                                                    setEditingCategoryId(cat.id)
+                                                    setEditCategoryName(cat.name)
+                                                  }}
                                                 >
-                                                  <Settings className="h-3.5 w-3.5" />
+                                                  <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
                                               </TooltipTrigger>
                                               <TooltipContent>
-                                                <p>Manage category</p>
+                                                <p>Edit category</p>
                                               </TooltipContent>
                                             </Tooltip>
-                                          ) : (
-                                            <>
-                                              {/* Edit Category */}
-                                              <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                  <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="h-8 w-8"
-                                                    onClick={() => {
-                                                      setEditingCategoryId(cat.id)
-                                                      setEditCategoryName(cat.name)
-                                                    }}
-                                                  >
-                                                    <Pencil className="h-3.5 w-3.5" />
-                                                  </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                  <p>Edit category</p>
-                                                </TooltipContent>
-                                              </Tooltip>
 
-                                              {/* Delete Category */}
-                                              <Tooltip>
-                                                <AlertDialog>
-                                                  <TooltipTrigger asChild>
-                                                    <AlertDialogTrigger asChild>
-                                                      <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
-                                                    </AlertDialogTrigger>
-                                                  </TooltipTrigger>
-                                                  <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
-                                                    <AlertDialogHeader>
-                                                      <AlertDialogTitle className="text-base sm:text-lg">Are you absolutely sure?</AlertDialogTitle>
-                                                      <AlertDialogDescription className="text-sm">
-                                                        This action cannot be undone. This will permanently delete the category "{cat.name}" from your account.
-                                                      </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter className="gap-2 sm:gap-2">
-                                                      <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
-                                                      <AlertDialogAction onClick={() => deleteCategory(cat.id)}>
-                                                        Delete
-                                                      </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                  </AlertDialogContent>
-                                                </AlertDialog>
-                                                <TooltipContent>
-                                                  <p>Delete category</p>
-                                                </TooltipContent>
-                                              </Tooltip>
-
-                                              {/* Close button */}
-                                              <Tooltip>
+                                            <Tooltip>
+                                              <AlertDialog>
                                                 <TooltipTrigger asChild>
-                                                  <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="h-8 w-8"
-                                                    onClick={() => setOpenCategoryId(null)}
-                                                  >
-                                                    <X className="h-3.5 w-3.5" />
-                                                  </Button>
+                                                  <AlertDialogTrigger asChild>
+                                                    <Button
+                                                      size="icon"
+                                                      variant="ghost"
+                                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                                    >
+                                                      <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                  </AlertDialogTrigger>
                                                 </TooltipTrigger>
-                                                <TooltipContent>
-                                                  <p>Close</p>
-                                                </TooltipContent>
-                                              </Tooltip>
-                                            </>
-                                          )}
-                                        </div>
+                                                <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
+                                                  <AlertDialogHeader>
+                                                    <AlertDialogTitle className="text-base sm:text-lg">Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription className="text-sm">
+                                                      This action cannot be undone. This will permanently delete the category "{cat.name}" from your account.
+                                                    </AlertDialogDescription>
+                                                  </AlertDialogHeader>
+                                                  <AlertDialogFooter className="gap-2 sm:gap-2">
+                                                    <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => deleteCategory(cat.id)}>
+                                                      Delete
+                                                    </AlertDialogAction>
+                                                  </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                              </AlertDialog>
+                                              <TooltipContent>
+                                                <p>Delete category</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </div>
+                                        </>
                                       )}
-                                    </>
-                                  )}
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
+                              ) : (
+                                // Show all categories with settings button
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {categories.map((cat) => (
+                                    <div
+                                      key={cat.id}
+                                      className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors"
+                                    >
+                                      {editingCategoryId === cat.id ? (
+                                        <>
+                                          <Input
+                                            type="text"
+                                            placeholder="Category name"
+                                            value={editCategoryName}
+                                            onChange={(e) => setEditCategoryName(e.target.value)}
+                                            className="h-8 flex-1"
+                                            autoFocus
+                                            autoComplete='off'
+                                          />
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 shrink-0"
+                                            onClick={() => updateCategory(cat.id)}
+                                          >
+                                            <Check className="h-4 w-4 text-green-600" />
+                                          </Button>
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 shrink-0"
+                                            onClick={() => setEditingCategoryId(null)}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="flex-1 text-sm font-medium truncate flex items-center gap-1.5">
+                                            {cat.readOnly ? (
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <span className="text-xs">{getCategoryEmoji(cat.id, cat.readOnly)}</span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Default Category</TooltipContent>
+                                              </Tooltip>
+                                            ) : (
+                                              <>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <span className="text-xs">{getCategoryEmoji(cat.id, cat.readOnly)}</span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Your created category</TooltipContent>
+                                              </Tooltip>
+                                              {/* <span className="text-xs">{getCategoryEmoji(cat.id, cat.readOnly)}</span> */}
+                                              </>
+                                            )}
+                                            {cat.name}
+                                          </span>
+                                          {!cat.readOnly}
+                                          <div>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="text-center py-6 text-sm text-muted-foreground">
@@ -1132,6 +1146,57 @@ export default function Home() {
                         </TooltipContent>
                       </Tooltip>
                     </ToggleGroup>
+
+                    {/* Category Filter - Integrated with sorting */}
+                    {categories.length > 0 && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                              <Button 
+                                variant={sortLinksByCategoryId ? 'secondary' : 'outline'}
+                                className="gap-1.5 h-10"
+                              >
+                                <Layers className="h-4 w-4" />
+                                <span className="hidden sm:inline">
+                                  {sortLinksByCategoryId 
+                                    ? categories.find(cat => cat.id === sortLinksByCategoryId)?.name 
+                                    : "Filter"}
+                                </span>
+                              </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[calc(100vw-2rem)] sm:w-72" align="end">
+                          <div className="flex flex-col gap-3">
+                            <h3 className="font-semibold text-sm">Filter by Category</h3>
+                            <Separator className="-mx-3 w-[calc(100%+1.5rem)]" />
+                            
+                            {/* All Links Button */}
+                            <Button
+                              size="sm"
+                              variant={sortLinksByCategoryId === null ? "default" : "outline"}
+                              onClick={() => setSortLinksByCategoryId(null)}
+                              className="w-full justify-start h-9"
+                            >
+                              All Links
+                            </Button>
+                            
+                            {/* Categories List */}
+                            <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto">
+                              {categories.map((cat) => (
+                                <Button
+                                  key={cat.id}
+                                  size="sm"
+                                  variant={sortLinksByCategoryId === cat.id ? "default" : "outline"}
+                                  onClick={() => setSortLinksByCategoryId(cat.id)}
+                                  className="h-9 gap-1.5 justify-start"
+                                >
+                                  <span className="text-xs">{getCategoryEmoji(cat.id, cat.readOnly)}</span>
+                                  <span className="truncate">{cat.name}</span>
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
 
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1278,7 +1343,39 @@ export default function Home() {
               </div>
 
               {/* Show links or empty state based on whether there are links */}
-              {links.length > 0 ? (
+              {isFilteringLinks ? (
+                // Show only grid skeleton when filtering
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
+                  {Array.from({ length: skeletonCount }).map((_, i) => (
+                    <div key={i} className="overflow-hidden h-full flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm">
+                      <Skeleton className="w-full h-40" />
+                      <div className="flex-1 flex flex-col p-3 sm:p-4 gap-2 sm:gap-3">
+                        <div className="flex items-start justify-between gap-2 sm:gap-3 mb-1 sm:mb-2">
+                          <div className="space-y-2 flex-1">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                          </div>
+                          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                            <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                            <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                            <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                            <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                            <Skeleton className="h-8 w-8 sm:h-7 sm:w-7 rounded-md" />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Skeleton className="w-3 h-3 rounded-full" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                        <div className="space-y-2">
+                          <Skeleton className="h-3 w-full" />
+                          <Skeleton className="h-3 w-5/6" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : links.length > 0 ? (
                 <>
                   {viewMode === "grid" ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
