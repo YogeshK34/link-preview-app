@@ -1174,7 +1174,7 @@ export default function Home() {
                                   </span>
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-[calc(100vw-2rem)] sm:w-72" align="end">
+                              <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[420px]" align="end">
                                 <div className="flex flex-col gap-3">
                                   <h3 className="font-semibold text-sm">Filter by Category</h3>
                                   <Separator className="-mx-3 w-[calc(100%+1.5rem)]" />
@@ -1190,7 +1190,7 @@ export default function Home() {
                                   </Button>
 
                                   {/* Categories List */}
-                                  <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
                                     {categories.map((cat) => (
                                       <Button
                                         key={cat.id}
