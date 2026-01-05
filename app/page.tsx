@@ -705,35 +705,9 @@ export default function Home() {
                           <UserStar />
                           <p>Sign in to Submit Links </p>
                         </>
-
                       }
                     </Button>
                   )}
-
-                  {/* {authLoading && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="w-full">
-                          <Button
-                            variant="outline"
-                            className="w-full h-10 cursor-not-allowed pointer-events-none"
-                            disabled
-                          >
-                            <Spinner className="h-4 w-4" />
-                            <span>Loading...</span>
-                          </Button>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <span>
-                          {authLoading ?
-                            "Checking Authentication"
-                            :
-                            "Please sign in to submit links"}
-                        </span>
-                      </TooltipContent>
-                    </Tooltip>
-                  )} */}
 
                   {user && (
                     <Button
