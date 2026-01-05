@@ -336,7 +336,7 @@ export default function Home() {
     if (loading) return;
 
     if (!user) {
-      toast.error("Please sign in to submit links", {
+      toast.error("Sign in to submit links", {
         action: {
           label: "Sign In",
           onClick: () => router.push("/login"),
@@ -632,7 +632,7 @@ export default function Home() {
                             <HelpCircle className="w-4 h-4 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="left">
-                            <p>Add your social/profile links to get a preview card.</p>
+                            <p>Add links to get a preview card.</p>
                           </TooltipContent>
                         </Tooltip>
                         <span>https://</span>
@@ -656,7 +656,7 @@ export default function Home() {
                               {authLoading ?
                                 "Checking Authentication"
                                 :
-                                "Please sign in to submit links"}
+                                "Sign in to submit links"}
                             </span>
                           </TooltipContent>
                         </Tooltip>
@@ -676,21 +676,18 @@ export default function Home() {
                   </div>
 
                   {!user && !authLoading && (
-                    <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                      Please{" "}
-                      <Button
-                        variant="link"
-                        type="button"
-                        className="p-0 h-auto font-semibold"
-                        onClick={() => router.push("/login")}
-                      >
-                        sign in
-                      </Button>{" "}
-                      to submit links
-                    </div>
+                    <Button
+                      onClick={() => { router.push('/login') }}
+                      variant='secondary'
+                      type='button'
+                      className='w-full h-10 font-medium gap-2'
+                    >
+                      <UserStar />
+                      Sign in to Submit Links
+                    </Button>
                   )}
 
-                  {!user ? (
+                  {authLoading && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-full">
@@ -699,15 +696,8 @@ export default function Home() {
                             className="w-full h-10 cursor-not-allowed pointer-events-none"
                             disabled
                           >
-                            {authLoading ?
-                              (
-                                <div className="flex items-center gap-2">
-                                  <Spinner className="h-4 w-4" />
-                                  <span>Loading...</span>
-                                </div>
-                              ) : (
-                                "🚫 Sign in to submit"
-                              )}
+                            <Spinner className="h-4 w-4" />
+                            <span>Loading...</span>
                           </Button>
                         </div>
                       </TooltipTrigger>
@@ -720,9 +710,11 @@ export default function Home() {
                         </span>
                       </TooltipContent>
                     </Tooltip>
-                  ) : (
+                  )}
+
+                  {user && (
                     <Button
-                      variant="default"
+                      variant='secondary'
                       type="submit"
                       className="w-full h-10 font-medium"
 
