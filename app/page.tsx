@@ -60,6 +60,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [sortLinksByCategoryId, setSortLinksByCategoryId] = useState<string | null>(null);
   const [isEditModeCategories, setIsEditModeCategories] = useState<boolean>(false);
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
   const router = useRouter()
 
   type Category = {
@@ -561,6 +562,18 @@ export default function Home() {
     };
   }
 
+  // redirecting function 
+  const redirectUser = async () => {
+    try {
+      setIsRedirecting(true);
+      // await new Promise(resolve => setTimeout(resolve, 500));
+      router.push('/login');
+    } catch (error: any) {
+      toast.error(error)
+      setIsRedirecting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen w-full flex flex-col bg-background px-4 py-8">
       <div className="flex-1 max-w-7xl mx-auto w-full">
@@ -677,17 +690,27 @@ export default function Home() {
 
                   {!user && !authLoading && (
                     <Button
-                      onClick={() => { router.push('/login') }}
+                      onClick={() => { redirectUser() }}
                       variant='secondary'
                       type='button'
                       className='w-full h-10 font-medium gap-2'
                     >
-                      <UserStar />
-                      Sign in to Submit Links
+                      {isRedirecting ? (
+                        <>
+                          <Spinner />
+                          <p>Loading...</p>
+                        </>
+                      ) :
+                        <>
+                          <UserStar />
+                          <p>Sign in to Submit Links </p>
+                        </>
+
+                      }
                     </Button>
                   )}
 
-                  {authLoading && (
+                  {/* {authLoading && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-full">
@@ -710,7 +733,7 @@ export default function Home() {
                         </span>
                       </TooltipContent>
                     </Tooltip>
-                  )}
+                  )} */}
 
                   {user && (
                     <Button
