@@ -1,4 +1,4 @@
-import { Check, Copy, ExternalLink, Layers, Pin, Plus, Share2, Trash2 } from "lucide-react";
+import { ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,6 +9,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Separator } from "./ui/separator";
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Copy01Icon, Delete02Icon, Layers01Icon, Navigation03Icon, PinIcon, TickDouble01Icon } from '@hugeicons/core-free-icons'
+
 
 /* eslint-disable */
 // XSS Protection: URL sanitization utility
@@ -356,7 +359,7 @@ export function LinkPreviewCard({
                   className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2"
                   title={isCopied ? "Copied!" : "Copy link"}
                 >
-                  {isCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  {isCopied ? <HugeiconsIcon icon={TickDouble01Icon} className="w-4 h-4 text-green-600" /> : <HugeiconsIcon icon={Copy01Icon} />}
                 </Toggle>
               </TooltipTrigger>
               <TooltipContent>Copy this link</TooltipContent>
@@ -375,7 +378,8 @@ export function LinkPreviewCard({
                     >
                       {linkCategories.length > 0 ? (
                         <>
-                          <Layers className="w-4 h-4 text-primary" />
+                          {/* <Layers className="w-4 h-4 text-primary" /> */}
+                          <HugeiconsIcon icon={Layers01Icon} />
                           {linkCategories.length > 1 && (
                             <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
                               {linkCategories.length}
@@ -413,7 +417,7 @@ export function LinkPreviewCard({
                         <>
                           <div className="grid grid-cols-2 gap-2">
                             {linkCategories.map((cat: any) => (
-                              <span 
+                              <span
                                 key={cat.id}
                                 className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-md bg-primary/10 text-primary border border-primary/20"
                               >
@@ -454,7 +458,7 @@ export function LinkPreviewCard({
                                 {isUpdating ? (
                                   <Spinner className="w-4 h-4" />
                                 ) : isAlreadyAdded ? (
-                                  <Check className="w-4 h-4 text-green-600" />
+                                  <HugeiconsIcon icon={TickDouble01Icon} className="w-4 h-4 text-green-600" />
                                 ) : (
                                   <></>
                                 )}
@@ -473,7 +477,8 @@ export function LinkPreviewCard({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Toggle onClick={shareLink} size="sm" variant="outline" className="h-8 w-8 sm:h-7 sm:w-auto sm:px-2 p-0 sm:p-2" title="Share link">
-                  <Share2 className="w-4 h-4" />
+                  {/* <Share2 className="w-4 h-4" /> */}
+                  <HugeiconsIcon icon={Navigation03Icon} />
                 </Toggle>
               </TooltipTrigger>
               <TooltipContent>Share this link</TooltipContent>
@@ -493,7 +498,7 @@ export function LinkPreviewCard({
                   {isPinning ? (
                     <Spinner className="w-4 h-4" />
                   ) : (
-                    <Pin className={`w-4 h-4 ${isPinned ? 'fill-current text-primary' : ''}`} />
+                    <HugeiconsIcon icon={PinIcon} className={`w-4 h-4 ${isPinned ? 'fill-current text-primary' : ''}`} />
                   )}
                 </Toggle>
               </TooltipTrigger>
@@ -521,7 +526,7 @@ export function LinkPreviewCard({
                           {isDeleting ? (
                             <Spinner className="w-4 h-4" />
                           ) : (
-                            <Trash2 className="w-4 h-4" />
+                            <HugeiconsIcon icon={Delete02Icon} />
                           )}
                         </Button>
                       </AlertDialogTrigger>
