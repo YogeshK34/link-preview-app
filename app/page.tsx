@@ -36,6 +36,8 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { AnonymousIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 // creating outside to prevent multiple client creations
 const supabase = createClient()
@@ -618,11 +620,18 @@ export default function Home() {
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <Avatar>
-                      <AvatarFallback>
-                        <UserStar />
-                      </AvatarFallback>
-                    </Avatar>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar onClick={() => { redirectUser() }} >
+                          <AvatarFallback>
+                            <HugeiconsIcon icon={AnonymousIcon} />
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Click to Login</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
 
                   <ThemeToggle />
