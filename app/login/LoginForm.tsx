@@ -67,7 +67,7 @@ export function LoginForm() {
           {isGoogleDirecting ? (
             <>
               <Spinner />
-              <p>Loading...</p>
+              <p>Redirecting...</p>
             </>
           ) : (
             <>
@@ -97,7 +97,7 @@ export function LoginForm() {
           {isGithubDirecting ? (
             <>
               <Spinner />
-              <p>Loading...</p>
+              <p>Redirecting...</p>
             </>
           ) : (
             <>
