@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as UserStar, LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, NotebookPen } from "lucide-react"
+import { HelpCircle, UserSearch as LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, NotebookPen, ArrowRight, UserRoundPlus } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -36,8 +36,6 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { AnonymousIcon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 
 // creating outside to prevent multiple client creations
 const supabase = createClient()
@@ -624,7 +622,7 @@ export default function Home() {
                       <TooltipTrigger asChild>
                         <Avatar onClick={() => { redirectUser() }} >
                           <AvatarFallback>
-                            <HugeiconsIcon icon={AnonymousIcon} />
+                            <UserRoundPlus className="w-4 h-4" />
                           </AvatarFallback>
                         </Avatar>
                       </TooltipTrigger>
@@ -711,8 +709,8 @@ export default function Home() {
                         </>
                       ) :
                         <>
-                          <UserStar />
-                          <p>Sign in to Submit Links </p>
+                          <UserRoundPlus />
+                          <p>Sign in</p>
                         </>
                       }
                     </Button>
@@ -1463,14 +1461,28 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>No link added yet</EmptyTitle>
-                <EmptyDescription>
-                  {user ? "Start by entering a link above" : "Sign in to start adding links"}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <div className="flex justify-content: space-between">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyTitle>No link added yet</EmptyTitle>
+                  <EmptyDescription>
+                    {user ? "Start by entering a link above" : "Sign in to start adding links"}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+              <ArrowRight/>
+              {/**
+               *  so this should actually actually swipe
+               * and display the other contents 
+               * like a carousel or something  
+               */}
+              </TooltipTrigger>
+              <TooltipContent>Click to next</TooltipContent>
+              </Tooltip>
+            </div>
           )}
         </div>
       </div>
