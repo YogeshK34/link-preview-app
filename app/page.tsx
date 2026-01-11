@@ -1464,8 +1464,8 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <div className="w-full max-w-4xl mx-auto px-4 sm:px-0">
-              <Carousel className="w-full">
+            <div className="w-full max-w-4xl mx-auto px-4">
+              <Carousel className="w-full relative px-12">
                 <CarouselContent>
                   <CarouselItem>
                     <div className="p-2 sm:p-4">
@@ -1536,8 +1536,8 @@ export default function Home() {
                     </div>
                   </CarouselItem>
                 </CarouselContent>
-                <CarouselPrevious className="hidden sm:flex" />
-                <CarouselNext className="hidden sm:flex" />
+                <CarouselPrevious className="left-0" />
+                <CarouselNext className="right-0" />
               </Carousel>
             </div>
           )}
