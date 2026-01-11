@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination"
-import { HelpCircle, UserSearch as LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, NotebookPen, ArrowRight, UserRoundPlus } from "lucide-react"
+import { HelpCircle, UserSearch as LayoutGrid, List, RefreshCw, ArrowUp, ArrowDown, X, Calendar, Type, Layers, Plus, Pencil, Trash2, Check, NotebookPen, UserRoundPlus } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -36,6 +36,9 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import { CloudDownloadIcon, DeliveryView01Icon} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 // creating outside to prevent multiple client creations
 const supabase = createClient()
@@ -1461,27 +1464,81 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <div className="flex justify-content: space-between">
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>No link added yet</EmptyTitle>
-                  <EmptyDescription>
-                    {user ? "Start by entering a link above" : "Sign in to start adding links"}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+            <div className="w-full max-w-4xl mx-auto px-4 sm:px-0">
+              <Carousel className="w-full">
+                <CarouselContent>
+                  <CarouselItem>
+                    <div className="p-2 sm:p-4">
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyTitle className="text-xl sm:text-2xl">How it works?</EmptyTitle>
+                          <EmptyDescription className="mt-4 sm:mt-6 space-y-4">
+                            <div className="flex flex-col items-center gap-3 sm:gap-4">
+                              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <UserRoundPlus className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
+                              </div>
+                              <div className="text-center px-2 sm:px-0">
+                                <h3 className="font-semibold text-base sm:text-lg mb-2">1. Sign in with social providers</h3>
+                                <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+                                  Connect with your preferred social account to get started
+                                </p>
+                              </div>
+                            </div>
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    </div>
+                  </CarouselItem>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-              <ArrowRight/>
-              {/**
-               *  so this should actually actually swipe
-               * and display the other contents 
-               * like a carousel or something  
-               */}
-              </TooltipTrigger>
-              <TooltipContent>Click to next</TooltipContent>
-              </Tooltip>
+                  <CarouselItem>
+                    <div className="p-2 sm:p-4">
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyTitle className="text-xl sm:text-2xl">How it works?</EmptyTitle>
+                          <EmptyDescription className="mt-4 sm:mt-6 space-y-4">
+                            <div className="flex flex-col items-center gap-3 sm:gap-4">
+                              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <HugeiconsIcon icon={CloudDownloadIcon} className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
+                              </div>
+                              <div className="text-center px-2 sm:px-0">
+                                <h3 className="font-semibold text-base sm:text-lg mb-2">2. Paste your desired links into the input box & wait for our server to fetch that link</h3>
+                                <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+                                  We'll automatically generate a preview with title, description, and image and related metadata
+                                </p>
+                              </div>
+                            </div>
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    </div>
+                  </CarouselItem>
+
+                  <CarouselItem>
+                    <div className="p-2 sm:p-4">
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyTitle className="text-xl sm:text-2xl">How it works?</EmptyTitle>
+                          <EmptyDescription className="mt-4 sm:mt-6 space-y-4">
+                            <div className="flex flex-col items-center gap-3 sm:gap-4">
+                              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <HugeiconsIcon icon={DeliveryView01Icon} className="w-7 h-7 sm:w-8 sm:h-8 text-primary"/>
+                              </div>
+                              <div className="text-center px-2 sm:px-0">
+                                <h3 className="font-semibold text-base sm:text-lg mb-2">3. Get a new preview of the URL and manage your links</h3>
+                                <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+                                  Explore options to organize, categorize, and manage all your saved links
+                                </p>
+                              </div>
+                            </div>
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex" />
+                <CarouselNext className="hidden sm:flex" />
+              </Carousel>
             </div>
           )}
         </div>
