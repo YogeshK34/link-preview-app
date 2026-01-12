@@ -1478,7 +1478,7 @@ export default function Home() {
                                 <UserRoundPlus className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                               </div>
                               <div className="text-center px-2 sm:px-0">
-                                <h3 className="font-semibold text-base sm:text-lg mb-2">1. Sign in with social providers</h3>
+                                <h3 className="font-semibold text-base sm:text-lg mb-2 text-primary">1. Sign in with social providers</h3>
                                 <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
                                   Connect with your preferred social account to get started
                                 </p>
@@ -1501,7 +1501,7 @@ export default function Home() {
                                 <HugeiconsIcon icon={CloudDownloadIcon} className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                               </div>
                               <div className="text-center px-2 sm:px-0">
-                                <h3 className="font-semibold text-base sm:text-lg mb-2">2. Paste your desired links into the input box & wait for our server to fetch that link</h3>
+                                <h3 className="font-semibold text-base sm:text-lg mb-2 text-primary">2. Paste your desired links into the input box & wait for our server to fetch that link</h3>
                                 <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
                                   We'll automatically generate a preview with title, description, and image and related metadata
                                 </p>
@@ -1524,7 +1524,7 @@ export default function Home() {
                                 <HugeiconsIcon icon={DeliveryView01Icon} className="w-7 h-7 sm:w-8 sm:h-8 text-primary"/>
                               </div>
                               <div className="text-center px-2 sm:px-0">
-                                <h3 className="font-semibold text-base sm:text-lg mb-2">3. Get a new preview of the URL and manage your links</h3>
+                                <h3 className="font-semibold text-base sm:text-lg mb-2 text-primary">3. Get a new preview of the URL and manage your links</h3>
                                 <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
                                   Explore options to organize, categorize, and manage all your saved links
                                 </p>
@@ -1593,6 +1593,23 @@ export default function Home() {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-5">
+            <AccordionTrigger>XSS Attack Protection</AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-4 text-balance">
+              <p>
+                LinkStorer implements comprehensive XSS (Cross-Site Scripting) protection to ensure your safety. All scraped metadata is thoroughly sanitized before storage and display.
+              </p>
+              <p>Our security measures include:</p>
+              <ul className="list-disc ml-6 space-y-2">
+                <li>Stripping all HTML tags and script content from titles and descriptions</li>
+                <li>Removing dangerous event handlers (onclick, onerror, etc.)</li>
+                <li>Blocking malicious URL schemes (javascript:, data:, vbscript:)</li>
+                <li>Validating all URLs to only allow safe http/https protocols</li>
+                <li>Content length limits to prevent DOS attacks</li>
+              </ul>
+              <p>This ensures that malicious websites cannot inject harmful code through their metadata.</p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-6">
             <AccordionTrigger>Why Some Links Don't Show Previews?</AccordionTrigger>
             <AccordionContent className="flex flex-col gap-4 text-balance">
               <p>Some websites intentionally block metadata scraping to protect their content. For example:</p>
